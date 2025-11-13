@@ -1,0 +1,48 @@
+{
+  "compilerOptions": {
+    // 基本設定
+    "target": "ES2022",                    // 編譯目標版本
+    "module": "NodeNext",                  // 使用 Node.js 的 ESM/CJS 模組系統
+    "moduleResolution": "NodeNext",        // Node.js 模組解析策略
+    "lib": ["ES2022"],                     // 包含的標準庫
+
+    // 輸出設定
+    "outDir": "./dist",                    // 編譯輸出目錄
+    "rootDir": "./",                       // 原始檔根目錄
+    "sourceMap": true,                     // 生成 source map 方便除錯
+
+    // 嚴格檢查
+    "strict": true,                        // 啟用所有嚴格類型檢查
+    "noImplicitAny": true,                 // 禁止隱式 any 類型
+    "strictNullChecks": true,              // 嚴格的 null 檢查
+    "strictFunctionTypes": true,           // 嚴格的函數類型檢查
+    "strictBindCallApply": true,           // 嚴格檢查 bind/call/apply
+    "strictPropertyInitialization": true,  // 嚴格檢查屬性初始化
+    "noImplicitThis": true,                // 禁止隱式的 this
+    "alwaysStrict": true,                  // 總是使用嚴格模式
+
+    // 額外檢查
+    "noUnusedLocals": true,                // 檢查未使用的區域變數
+    "noUnusedParameters": true,            // 檢查未使用的參數
+    "noImplicitReturns": true,             // 檢查函數必須有返回值
+    "noFallthroughCasesInSwitch": true,    // 檢查 switch 的 fallthrough
+
+    // 互操作性
+    "esModuleInterop": true,               // 允許 CommonJS 模組的預設導入
+    "allowSyntheticDefaultImports": true,  // 允許合成預設導入
+    "forceConsistentCasingInFileNames": true, // 強制檔案名稱大小寫一致
+    "resolveJsonModule": true,             // 允許導入 JSON 檔案
+
+    // 其他
+    "skipLibCheck": true,                  // 跳過 .d.ts 檔案的類型檢查(加快編譯)
+    "declaration": true,                   // 生成 .d.ts 宣告檔案
+    "declarationMap": true                 // 生成 .d.ts 的 source map
+  },
+  "include": [
+    "**/*.ts"                              // 包含所有 .ts 檔案
+  ],
+  "exclude": [
+    "node_modules",                        // 排除 node_modules
+    "dist"                                 // 排除輸出目錄
+  ]
+}
