@@ -1,5 +1,5 @@
 /**
- * @desc 全局计时器管理器
+ * @desc 全域計時器管理器
  */
 export class GlobalTimerManager {
   private subscribers: Map<number, Set<() => void>> = new Map()
