@@ -15,7 +15,7 @@ export function App() {
   }
 
   useEffect(() => {
-    window.addEventListener('message', (event: MessageEvent<UiMessage<any>>) => {
+    window.addEventListener('message', (event: MessageEvent<UiMessage<UiMessageType>>) => {
       switch (event.data.type) {
         case 'count': {
           setMsgCount(event.data.data)

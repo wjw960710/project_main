@@ -3,7 +3,7 @@ penpot.ui.open("Plugin name", "", {
   height: 500,
 })
 
-penpot.ui.onMessage((message: PenpotMessage<any>) => {
+penpot.ui.onMessage((message: PenpotMessage<PenpotMessageType>) => {
   switch (message.type) {
     case 'count': {
       const msg: UiMessage<'count'> = {

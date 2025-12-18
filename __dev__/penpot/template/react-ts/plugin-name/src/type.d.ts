@@ -2,12 +2,12 @@ type PenpotMessageType = 'count'
 
 type PenpotMessage<T extends PenpotMessageType> = {
   type: T,
-  data: T extends PenpotMessageType ? number : never
+  data: T extends 'count' ? number : never
 }
 
 type UiMessageType = 'count'
 
 type UiMessage<T extends UiMessageType> = {
   type: T,
-  data: T extends UiMessageType ? number : never
+  data: T extends 'count' ? number : never
 }
