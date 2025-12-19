@@ -1,4 +1,5 @@
 type MessageType = 'GET_LIB_COLORS'
+  | 'TEST'
 
 type PenpotMessage<T extends MessageType> = {
   type: T

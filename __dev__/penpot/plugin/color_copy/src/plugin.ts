@@ -12,6 +12,16 @@ penpot.ui.onMessage((message: PenpotMessage<MessageType>) => {
       data: groupList,
     })
   })
+
+  onMessage(message, 'TEST', (_message) => {
+    const list = penpot.library.local.components
+    console.log(list)
+    for (let i = 0; i < 1; i++) {
+      list[i].mainInstance().export({
+        type: 'png',
+      })
+    }
+  })
 })
 
 function onMessage <T extends MessageType>(message: PenpotMessage<T>, type: T, callback: (message: PenpotMessage<T>) => void) {
