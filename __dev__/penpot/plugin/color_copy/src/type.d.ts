@@ -1,12 +1,13 @@
-type PenpotMessageType = 'GET_LOCAL_COLOR_LIST'
+type MessageType = 'GET_LIB_COLORS'
 
-type PenpotMessage<T extends PenpotMessageType> = {
+type PenpotMessage<T extends MessageType> = {
   type: T
 }
 
-type UiMessageType = 'GET_LOCAL_COLOR_LIST'
-type LOCAL_GROUP_COLOR_List = { _key: string, data: import("@penpot/plugin-types").LibraryColor[] }[]
-type UiMessage<T extends UiMessageType> = {
+type LocalGroupColor = { _key: string, data: import("@penpot/plugin-types").LibraryColor[] }
+type UiMessage<T extends MessageType> = {
   type: T,
-  data: T extends 'GET_LOCAL_COLOR_LIST' ? LOCAL_GROUP_COLOR_List : never
+  data: T extends 'GET_LIB_COLORS'
+    ? LocalGroupColor[]
+    : never
 }

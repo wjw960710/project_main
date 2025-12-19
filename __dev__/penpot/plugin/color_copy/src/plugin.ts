@@ -3,21 +3,22 @@ penpot.ui.open("Color Copy", "", {
   height: 500,
 })
 
-penpot.ui.onMessage((message: PenpotMessage<PenpotMessageType>) => {
-  switch (message.type) {
-    case 'GET_LOCAL_COLOR_LIST': {
-      const localColorList = penpot.library.local.colors
-      const localGroupColorList = groupByToList(localColorList, (color) => color.path || 'DEFAULT')
-      const msg: UiMessage<'GET_LOCAL_COLOR_LIST'> = {
-        type: 'GET_LOCAL_COLOR_LIST',
-        data: localGroupColorList,
-      }
-      penpot.ui.sendMessage(msg)
-      break
-    }
-    default:
-  }
+penpot.ui.onMessage((message: PenpotMessage<MessageType>) => {
+  onMessage(message, 'GET_LIB_COLORS', (_message) => {
+    const list = penpot.library.local.colors
+    const groupList = groupByToList(list, (color) => color.path || 'DEFAULT')
+    penpot.ui.sendMessage({
+      type: _message.type,
+      data: groupList,
+    })
+  })
 })
+
+function onMessage <T extends MessageType>(message: PenpotMessage<T>, type: T, callback: (message: PenpotMessage<T>) => void) {
+  if (message.type === type) {
+    callback(message)
+  }
+}
 
 function groupByToList <T, K extends string | number>(
   items: T[],

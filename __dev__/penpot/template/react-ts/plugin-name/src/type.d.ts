@@ -1,13 +1,11 @@
-type PenpotMessageType = 'count'
+type MessageType = 'COUNT'
 
-type PenpotMessage<T extends PenpotMessageType> = {
+type PenpotMessage<T extends MessageType> = {
   type: T,
-  data: T extends 'count' ? number : never
+  data: T extends 'COUNT' ? number : never
 }
 
-type UiMessageType = 'count'
-
-type UiMessage<T extends UiMessageType> = {
+type UiMessage<T extends MessageType> = {
   type: T,
-  data: T extends 'count' ? number : never
+  data: T extends 'COUNT' ? number : never
 }

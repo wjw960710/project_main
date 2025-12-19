@@ -1,9 +1,5 @@
 import {useEffect, useState} from "react"
 
-function snedMessageToPenpot <T extends PenpotMessageType>(msg: PenpotMessage<T>) {
-  parent.postMessage(msg, '*')
-}
-
 export function App() {
   const [count, setCount] = useState(0)
   const [msgCount, setMsgCount] = useState(count)
@@ -11,18 +7,14 @@ export function App() {
   function updateCount () {
     const newCount = count + 1
     setCount(newCount)
-    snedMessageToPenpot({type: 'count', data: newCount})
+    snedMessageToPenpot({type: 'COUNT', data: newCount})
   }
 
   useEffect(() => {
-    window.addEventListener('message', (event: MessageEvent<UiMessage<UiMessageType>>) => {
-      switch (event.data.type) {
-        case 'count': {
-          setMsgCount(event.data.data)
-          break
-        }
-        default:
-      }
+    window.addEventListener('message', (event: MessageEvent<UiMessage<MessageType>>) => {
+      onMessage(event, 'COUNT', _event => {
+        setMsgCount(_event.data.data)
+      })
     })
   }, [])
 
@@ -33,4 +25,14 @@ export function App() {
       <div className={'cursor-pointer'} onClick={updateCount}>From Penpot: {msgCount}</div>
     </div>
   </div>
+}
+
+function snedMessageToPenpot <T extends MessageType>(msg: PenpotMessage<T>) {
+  parent.postMessage(msg, '*')
+}
+
+function onMessage <T extends MessageType>(event: MessageEvent<UiMessage<T>>, type: T, callback: (event: MessageEvent<UiMessage<T>>) => void) {
+  if (event.data.type === type) {
+    callback(event)
+  }
 }

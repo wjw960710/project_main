@@ -1,33 +1,25 @@
 import {useEffect, useState} from "react"
 
-function snedMessageToPenpot <T extends PenpotMessageType>(msg: PenpotMessage<T>) {
-  parent.postMessage(msg, '*')
-}
-
 export function App() {
-  const [localColors, setLocalColors] = useState<LOCAL_GROUP_COLOR_List>([])
+  const [libColors, setLibColors] = useState<LocalGroupColor[]>([])
 
   function getLocalColorList () {
-    snedMessageToPenpot({ type: 'GET_LOCAL_COLOR_LIST' })
+    snedMessageToPenpot({ type: 'GET_LIB_COLORS' })
   }
 
   useEffect(() => {
-    window.addEventListener('message', (event: MessageEvent<UiMessage<any>>) => {
-      switch (event.data.type) {
-        case 'GET_LOCAL_COLOR_LIST': {
-          setLocalColors(event.data.data)
-          break
-        }
-        default:
-      }
+    window.addEventListener('message', (event: MessageEvent<UiMessage<MessageType>>) => {
+      onMessage(event, 'GET_LIB_COLORS', _event => {
+        setLibColors(_event.data.data)
+      })
     })
   }, [])
 
   return <div className="min-h-screen min-w-full bg-white flex items-center content-center justify-center flex-wrap">
     <div className={'text-black text-center text-[12rem]'}>
       {
-        localColors.length
-          ? localColors.map(e => {
+        libColors.length
+          ? libColors.map(e => {
             return <div key={e._key}>
               {e.data.map(f => {
                 return <div key={f.name}>{e._key} {f.name}</div>
@@ -38,4 +30,14 @@ export function App() {
       }
     </div>
   </div>
+}
+
+function snedMessageToPenpot <T extends MessageType>(msg: PenpotMessage<T>) {
+  parent.postMessage(msg, '*')
+}
+
+function onMessage <T extends MessageType>(event: MessageEvent<UiMessage<T>>, type: T, callback: (event: MessageEvent<UiMessage<T>>) => void) {
+  if (event.data.type === type) {
+    callback(event)
+  }
 }
