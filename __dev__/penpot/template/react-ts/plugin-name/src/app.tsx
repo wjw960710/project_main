@@ -4,12 +4,6 @@ export function App() {
   const [count, setCount] = useState(0)
   const [msgCount, setMsgCount] = useState(count)
 
-  function updateCount () {
-    const newCount = count + 1
-    setCount(newCount)
-    snedMessageToPenpot({type: 'COUNT', data: newCount})
-  }
-
   useEffect(() => {
     window.addEventListener('message', (event: MessageEvent<UiMessage<MessageType>>) => {
       onMessage(event, 'COUNT', _event => {
@@ -17,6 +11,12 @@ export function App() {
       })
     })
   }, [])
+
+  function updateCount () {
+    const newCount = count + 1
+    setCount(newCount)
+    snedMessageToPenpot({type: 'COUNT', data: newCount})
+  }
 
   return <div className="min-h-screen min-w-full bg-white flex items-center content-center justify-center flex-wrap">
     <div className="text-[36rem] font-bold">Welcome plugin with Bun, React-TS and Tailwindcss!</div>
