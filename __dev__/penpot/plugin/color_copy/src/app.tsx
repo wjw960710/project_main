@@ -15,13 +15,8 @@ export function App() {
     snedMessageToPenpot({ type: 'GET_LIB_COLORS' })
   }
 
-  function handleTest () {
-    snedMessageToPenpot({ type: 'TEST' })
-  }
-
   return <div className="min-h-screen min-w-full bg-white flex items-center content-center justify-center flex-wrap">
     <div className={'text-black text-center text-[12rem]'}>
-      <div className={'cursor-pointer border-solid border-2 border-black p-[8rem]'} onClick={handleTest}>test</div>
       {
         libColors.length
           ? libColors.map(e => {
