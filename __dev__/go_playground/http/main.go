@@ -15,8 +15,23 @@ type User struct {
 	Name string `json:"name" doc:"姓名"`
 	// 在 Go 中，可為 null 的字串通常使用 *string (指標)
 	// 如果是 nil，編碼後就會是 null
-	Age   *string  `json:"age" doc:"年齡"`
-	Works []string `json:"works" doc:"工作技能列表"`
+	Age        *string         `json:"age" doc:"年齡"`
+	Works      []string        `json:"works" doc:"工作技能列表"`
+	HealthInfo []HealthInfo    `json:"healthInfo" doc:"健檢資料"`
+	Family     map[string]User `json:"family" doc:"家庭成員"`
+}
+
+type HealthInfo struct {
+	CreateTime         int                 `json:"createTime" doc:"檢查時間"`
+	Height             int                 `json:"height" doc:"身高"`
+	Weight             int                 `json:"weight" doc:"體重"`
+	AdditionalFeeItems []AdditionalFeeItem `json:"additionalFeeItems" doc:"加費項目列表"`
+	Price              int                 `json:"price" doc:"總費用"`
+}
+
+type AdditionalFeeItem struct {
+	Name  string `json:"name" doc:"項目名稱"`
+	Price int    `json:"price" doc:"費用"`
 }
 
 func userHandler(w http.ResponseWriter, r *http.Request) {
@@ -34,6 +49,48 @@ func userHandler(w http.ResponseWriter, r *http.Request) {
 		Name:  "小明",
 		Age:   ageValue, // 傳遞指標以支援 null
 		Works: []string{"Golang Engineer", "Backend Developer"},
+		HealthInfo: []HealthInfo{
+			HealthInfo{
+				CreateTime: 1671234567,
+				Height:     180,
+				Weight:     80,
+				AdditionalFeeItems: []AdditionalFeeItem{
+					AdditionalFeeItem{
+						Name:  "肺部超音波",
+						Price: 100,
+					},
+				},
+				Price: 200,
+			},
+			HealthInfo{
+				CreateTime: 1948192131,
+				Height:     180,
+				Weight:     72,
+				AdditionalFeeItems: []AdditionalFeeItem{
+					AdditionalFeeItem{
+						Name:  "視力測驗",
+						Price: 20,
+					},
+					AdditionalFeeItem{
+						Name:  "蟯蟲檢驗",
+						Price: 70,
+					},
+				},
+				Price: 190,
+			},
+		},
+		Family: map[string]User{
+			"father": {
+				Name:  "大明",
+				Age:   func() *string { age := "50"; return &age }(),
+				Works: []string{"Manager"},
+			},
+			"mother": {
+				Name:  "阿花",
+				Age:   func() *string { age := "48"; return &age }(),
+				Works: []string{"Teacher"},
+			},
+		},
 	}
 
 	// 3. 設定 Response Header 為 JSON 格式
@@ -48,14 +105,15 @@ func userHandler(w http.ResponseWriter, r *http.Request) {
 func userDocHandler(w http.ResponseWriter, r *http.Request) {
 	// 使用 reflect 分析 User struct
 	userType := reflect.TypeOf(User{})
-	tsType := generateTSType("User", userType)
+	tsType := generateTSType(userType)
 
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	fmt.Fprint(w, tsType)
 }
 
-func generateTSType(typeName string, t reflect.Type) string {
+func generateTSType(t reflect.Type) string {
 	var builder strings.Builder
+	typeName := t.Name()
 
 	builder.WriteString(fmt.Sprintf("type %s = {\n", typeName))
 
@@ -68,13 +126,21 @@ func generateTSType(typeName string, t reflect.Type) string {
 			continue
 		}
 
+		// 處理 json tag 中的選項 (如 "name,omitempty")
+		fieldName := strings.Split(jsonTag, ",")[0]
+
 		// 取得 doc tag 作為備註名稱
 		docTag := field.Tag.Get("doc")
 
 		// 轉換 Go 類型到 TypeScript 類型
 		tsFieldType := goTypeToTSType(field.Type)
 
-		builder.WriteString(fmt.Sprintf("  %s: %s%s\n", jsonTag, tsFieldType, emptyDocWith(docTag, "", func(s string) string { return fmt.Sprintf(" // %s", s) })))
+		// 修改這裡：改成行內註解格式
+		docComment := emptyDocWith(docTag, "", func(s string) string {
+			return fmt.Sprintf(" // %s", s)
+		})
+
+		builder.WriteString(fmt.Sprintf("  %s: %s%s\n", fieldName, tsFieldType, docComment))
 	}
 
 	builder.WriteString("}")
@@ -129,8 +195,11 @@ func goTypeToTSType(t reflect.Type) string {
 		return "unknown"
 
 	case reflect.Struct:
-		// 對於嵌套的 struct，可以遞迴處理
-		// 這裡簡化為 object
+		// 對於命名的 struct，使用其類型名稱
+		if t.Name() != "" {
+			return t.Name()
+		}
+		// 對於匿名 struct，回傳 object
 		return "object"
 
 	default:
