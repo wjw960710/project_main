@@ -1,0 +1,5 @@
+### user
+GET http://localhost:3313/user
+
+### doc/user
+GET http://localhost:3313/doc/user
