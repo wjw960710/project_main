@@ -1,8 +1,12 @@
+import {Counter} from "./component/counter/counter.tsx";
+import {Counter2} from "./component/counter2/counter.tsx";
+
 function App() {
 
   return (
-    <div className={'c-red'}>
-      red text
+    <div>
+      <Counter />
+      <Counter2 />
     </div>
   )
 }
