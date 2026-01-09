@@ -4,8 +4,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev:penpot_color_copy": "concurrently \"bunx --bun vite build --watch\" \"bunx --bun vite preview\"",
-    "build:penpot_color_copy": "bunx --bun vite build"
+    "dev:plugin_name": "concurrently \"vite build --watch\" \"vite preview\"",
+    "build:plugin_name": "vite build"
   },
   "dependencies": {
     "@penpot/plugin-styles": "^1.3.2",
@@ -15,7 +15,6 @@
   "devDependencies": {
     "@penpot/plugin-types": "^1.3.2",
     "@tailwindcss/vite": "^4.1.18",
-    "@types/bun": "^1.3.4",
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",
