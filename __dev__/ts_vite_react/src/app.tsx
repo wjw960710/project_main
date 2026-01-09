@@ -4,6 +4,7 @@ import {Todo} from "./component/todo/todo.tsx";
 import {Todo2} from "./component/todo2/todo.tsx";
 import {Todo3} from "./component/todo3/todo.tsx";
 import {Todo4} from "./component/todo4/todo.tsx";
+import {Todo5} from "./component/todo5/todo.tsx";
 
 function App() {
 
@@ -24,6 +25,8 @@ function App() {
       <Todo3 />
       <div className={'my-4'}>原生ctx但在同檔裡封裝Provider/use 待辦事項</div>
       <Todo4 />
+      <div className={'my-4'}>原生ctx但provder寫在context裡 待辦事項</div>
+      <Todo5 />
     </div>
   )
 }
