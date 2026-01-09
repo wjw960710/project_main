@@ -8,4 +8,7 @@ export default defineConfig({
     UnoCSS(),
     react(),
   ],
+  server: {
+    open: true,
+  }
 })
