@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/collapsible.tsx'
 import { BsPlusLg } from 'react-icons/bs'
 import { BsDashLg } from 'react-icons/bs'
+import { copyToClipboard } from '@/helper.ts'
 
 type UnoGroupColor = { group: string; list: string[] }
 
@@ -132,31 +133,27 @@ export function App() {
 		}
 	}
 
-	function handleCopyUnoColorString(group: string) {
+	function handleCopyUnoGroupColorString(group: string) {
 		return (ev: MouseEvent<SVGElement>) => {
 			ev.stopPropagation()
 
 			const unoColorGroup = dataBySearch.unoColorGroupList.find(e => e.group === group)
 			if (!unoColorGroup) {
-				toast.error('找不到顏色群組')
+				toast.error(`找不到該群組顏色`)
 				return
 			}
 
-			const textArea = document.createElement('textarea')
-			textArea.value = `{
+			copyToClipboard(
+				`{
   ${unoColorGroup.list.join('\n  ')}
-}`
-			document.body.appendChild(textArea)
-			textArea.select()
-			try {
-				document.execCommand('copy')
-				toast.success('複製群組顏色成功')
-			} catch (error) {
-				console.error(error)
-				toast.error('複製群組顏色異常')
-			}
-			document.body.removeChild(textArea)
+}`,
+				MAP_LIB_UI_GROUP_NAME[unoColorGroup.group] || unoColorGroup.group,
+			)
 		}
+	}
+
+	function handleCopyUnoColorString(idx: string, lineText: string) {
+		return () => copyToClipboard(lineText, `${idx} 顏色`)
 	}
 
 	function handleOpenChange(group: string) {
@@ -194,7 +191,7 @@ export function App() {
 						</TooltipTrigger>
 						<TooltipContent>
 							<p>
-								可用+篩選多個條件(首字 & 為 and 篩選)。
+								可用 + 篩選多個條件(首字 & 為 and 篩選)。
 								<br />
 								e.g. Aa01-Aa06, 首頁浮層相關色, com1-3+一般
 							</p>
@@ -222,10 +219,12 @@ export function App() {
 						}
 					}
 
+					groupName += `(${e.list.length})`
+
 					return (
 						<Collapsible key={e.group} open={isOpen} onOpenChange={handleOpenChange(e.group)}>
 							<CollapsibleTrigger asChild>
-								<div className={'mt-4 mb-2 flex w-full cursor-pointer items-center font-bold'}>
+								<div className={'pt-4 pb-2 flex w-full cursor-pointer items-center font-bold'}>
 									<div>
 										{!!subGroupName && (
 											<div className={'text-xs text-gray-400'}>| {subGroupName}</div>
@@ -235,7 +234,7 @@ export function App() {
 
 											<BsCopy
 												className={'ml-1 cursor-pointer'}
-												onClick={handleCopyUnoColorString(e.group)}
+												onClick={handleCopyUnoGroupColorString(e.group)}
 											/>
 										</div>
 									</div>
@@ -248,7 +247,13 @@ export function App() {
 
 								return (
 									<CollapsibleContent key={f} className={'pl-4'}>
-										<span className={'text-gray-400 mr-1'}>{idx}.</span>
+										<span className={'mr-1 text-gray-400'}>
+											<BsCopy
+												className={'mr-1 inline cursor-pointer'}
+												onClick={handleCopyUnoColorString(idx, f)}
+											/>
+											{idx}.
+										</span>
 										<HighlightedText text={f} highlights={dataBySearch.highlights} />
 									</CollapsibleContent>
 								)
@@ -276,6 +281,8 @@ function toUnoColorGroupList(groupLibColors: Record<string, LibraryColor[]>) {
 			if (!e.name) return
 
 			const isGradient = e.gradient?.stops != null
+
+			// region 尾註釋版本(後續可以考慮看看要不要修化成這樣)
 			if (isGradient) {
 				e.gradient!.stops.forEach((f, i) => {
 					resultItem.list.push(`${e.name}_${i + 1}: ${toColorValue(f)},${colorDoc(e.path)}`)
@@ -283,6 +290,7 @@ function toUnoColorGroupList(groupLibColors: Record<string, LibraryColor[]>) {
 			} else {
 				resultItem.list.push(`${e.name}: ${toColorValue(e)},${colorDoc(e.path)}`)
 			}
+			// endregion
 		})
 
 		if (resultItem.list.length) result.push(resultItem)
@@ -311,7 +319,7 @@ function toUnoColorGroupList(groupLibColors: Record<string, LibraryColor[]>) {
 			if (color.opacity < 1) return `rgba('${color.color}', ${color.opacity})`
 		}
 
-		return color.color
+		return `'${color.color}'`
 	}
 }
 
