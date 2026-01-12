@@ -1,0 +1,63 @@
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
+import { build as esbuild } from 'esbuild'
+import path from 'node:path'
+import manifest from './public/manifest.json'
+
+const PROJECT_DIR = manifest.name.replace(/\s/g, '_').toLowerCase()
+const VITE_BASE = `plugins/${PROJECT_DIR}`
+const VITE_OUT_DIR = `dist/${VITE_BASE}`
+
+// https://vite.dev/config/
+export default defineConfig({
+	plugins: [tailwindcss(), react(), postProcessPlugin()],
+	base: VITE_BASE,
+	resolve: {
+		alias: {
+			'@': path.resolve(__dirname, './src'),
+		},
+	},
+	build: {
+		outDir: VITE_OUT_DIR,
+		rolldownOptions: {
+			input: {
+				plugin: 'src/plugin.ts',
+				index: './index.html',
+			},
+			output: {
+				entryFileNames: '[name].js',
+			},
+		},
+	},
+	preview: {
+		port: 4444,
+		cors: true,
+	},
+})
+
+/**
+ * @desc 多編譯一次 plugin 以解決不能使用 import 語法的問題
+ */
+function postProcessPlugin() {
+	return {
+		name: 'post-process-plugin',
+		closeBundle: async () => {
+			const pluginPath = path.resolve(__dirname, `${VITE_OUT_DIR}/plugin.js`)
+
+			console.log('正在使用 esbuild 重新封裝 plugin.js...')
+
+			await esbuild({
+				entryPoints: [pluginPath],
+				outfile: pluginPath,
+				bundle: true,
+				minify: true,
+				allowOverwrite: true,
+				format: 'iife',
+				platform: 'browser',
+			})
+
+			console.log('plugin.js 重新封裝完成！')
+		},
+	}
+}
