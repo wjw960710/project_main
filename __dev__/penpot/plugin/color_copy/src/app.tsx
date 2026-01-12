@@ -1,20 +1,20 @@
-import { type ChangeEvent, useEffect, useMemo, useState } from 'react'
+import { type ChangeEvent, type MouseEvent, useEffect, useMemo, useState } from 'react'
 import type { LibraryColor } from '@penpot/plugin-types'
 import { clone, debounce } from 'radash'
-import { MAP_LIB_GROUP_NAME, MAP_LIB_UI_GROUP_NAME, MAP_NAME } from './constant.ts'
+import { MAP_LIB_UI_GROUP_NAME, MAP_NAME } from './constant.ts'
 import { HighlightedText } from './components/ui/highlighted-text.tsx'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip.tsx'
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from '@/components/ui/select.tsx'
-import { BsQuestionCircleFill } from 'react-icons/bs'
-import { BsCopy } from 'react-icons/bs'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select.tsx'
+import { BsCopy, BsQuestionCircleFill } from 'react-icons/bs'
 import { Input } from '@/components/ui/input.tsx'
-import { Toaster, toast } from 'sonner'
+import { toast, Toaster } from 'sonner'
+import {
+	Collapsible,
+	CollapsibleContent,
+	CollapsibleTrigger,
+} from '@/components/ui/collapsible.tsx'
+import { BsPlusLg } from 'react-icons/bs'
+import { BsDashLg } from 'react-icons/bs'
 
 type UnoGroupColor = { group: string; list: string[] }
 
@@ -26,6 +26,7 @@ export function App() {
 	const [groupLibColors, setGroupLibColors] = useState<Record<string, LibraryColor[]>>(
 		() => ({}),
 	)
+	const [collapsedGroup, setCollapsedGroup] = useState<Record<string, boolean>>({})
 	const [searchState, setSearchState] = useState(() => ({
 		group: MAP_SEARCH_VALUE.allGroup,
 		text: '',
@@ -117,6 +118,7 @@ export function App() {
 	useEffect(() => {
 		const d = debounce({ delay: 300 }, () => {
 			setResultSearchState(searchState)
+			setCollapsedGroup({})
 		})
 
 		d()
@@ -131,7 +133,9 @@ export function App() {
 	}
 
 	function handleCopyUnoColorString(group: string) {
-		return () => {
+		return (ev: MouseEvent<SVGElement>) => {
+			ev.stopPropagation()
+
 			const unoColorGroup = dataBySearch.unoColorGroupList.find(e => e.group === group)
 			if (!unoColorGroup) {
 				toast.error('找不到顏色群組')
@@ -155,13 +159,22 @@ export function App() {
 		}
 	}
 
+	function handleOpenChange(group: string) {
+		return () => {
+			setCollapsedGroup(e => ({
+				...e,
+				[group]: collapsedGroup[group] == null ? false : !collapsedGroup[group],
+			}))
+		}
+	}
+
 	return (
 		<div className="min-h-screen min-w-full bg-white text-[0.75rem] text-black">
 			<Toaster richColors />
 			<div className="w-full py-2 pr-2">
 				<Select value={searchState.group} onValueChange={handleChangeSearch('group')}>
-					<SelectTrigger size={'sm'} className="w-full">
-						<SelectValue placeholder="Theme" />
+					<SelectTrigger className="w-full">
+						<SelectValue />
 					</SelectTrigger>
 					<SelectContent>
 						<SelectItem value={MAP_SEARCH_VALUE.allGroup}>全部</SelectItem>
@@ -174,9 +187,9 @@ export function App() {
 						})}
 					</SelectContent>
 				</Select>
-				<div className="flex w-full mt-1 items-center">
+				<div className="mt-1 flex w-full items-center">
 					<Tooltip>
-						<TooltipTrigger asChild>
+						<TooltipTrigger>
 							<BsQuestionCircleFill className={'mx-1 text-lg'} />
 						</TooltipTrigger>
 						<TooltipContent>
@@ -198,25 +211,49 @@ export function App() {
 			</div>
 			<div className="w-full">
 				{dataBySearch.unoColorGroupList.map(e => {
+					const isOpen = collapsedGroup[e.group] || collapsedGroup[e.group] == null
+					let groupName = e.group
+					let subGroupName = ''
+
+					if (MAP_LIB_UI_GROUP_NAME[e.group]) {
+						groupName = MAP_LIB_UI_GROUP_NAME[e.group]
+						if (e.group !== MAP_NAME.libLocal) {
+							subGroupName += e.group
+						}
+					}
+
 					return (
-						<div key={e.group}>
-							<div className={'mt-4 mb-2 flex items-center font-bold'}>
-								{MAP_LIB_UI_GROUP_NAME[e.group]
-									? `${MAP_LIB_UI_GROUP_NAME[e.group]}${e.group === MAP_NAME.libLocal ? '' : `(${e.group})`}`
-									: e.group}
-								<BsCopy
-									className={'ml-1 cursor-pointer'}
-									onClick={handleCopyUnoColorString(e.group)}
-								/>
-							</div>
-							{e.list.map(f => {
-								return (
-									<div key={f} className={'pl-4'}>
-										<HighlightedText text={f} highlights={dataBySearch.highlights} />
+						<Collapsible key={e.group} open={isOpen} onOpenChange={handleOpenChange(e.group)}>
+							<CollapsibleTrigger asChild>
+								<div className={'mt-4 mb-2 flex w-full cursor-pointer items-center font-bold'}>
+									<div>
+										{!!subGroupName && (
+											<div className={'text-xs text-gray-400'}>| {subGroupName}</div>
+										)}
+										<div className={'flex items-center text-sm'}>
+											{groupName}
+
+											<BsCopy
+												className={'ml-1 cursor-pointer'}
+												onClick={handleCopyUnoColorString(e.group)}
+											/>
+										</div>
 									</div>
+
+									<div className="ml-auto">{isOpen ? <BsDashLg /> : <BsPlusLg />}</div>
+								</div>
+							</CollapsibleTrigger>
+							{e.list.map((f, j) => {
+								const idx = String(j + 1).padStart(String(e.list.length).length, '0')
+
+								return (
+									<CollapsibleContent key={f} className={'pl-4'}>
+										<span className={'text-gray-400 mr-1'}>{idx}.</span>
+										<HighlightedText text={f} highlights={dataBySearch.highlights} />
+									</CollapsibleContent>
 								)
 							})}
-						</div>
+						</Collapsible>
 					)
 				})}
 			</div>
