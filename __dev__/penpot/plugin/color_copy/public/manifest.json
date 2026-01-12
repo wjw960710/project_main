@@ -1,17 +1,17 @@
 {
-  "name": "Color Copy",
-  "description": "顏色複製",
-  "code": "/plugin.js",
-  "icon": "/icon.png",
-  "permissions": [
-    "content:read",
-    "content:write",
-    "library:read",
-    "library:write",
-    "user:read",
-    "comment:read",
-    "comment:write",
-    "allow:downloads",
-    "allow:localstorage"
-  ]
+	"name": "Color Copy",
+	"description": "顏色複製",
+	"code": "/plugin.js",
+	"icon": "/icon.png",
+	"permissions": [
+		"content:read",
+		"content:write",
+		"library:read",
+		"library:write",
+		"user:read",
+		"comment:read",
+		"comment:write",
+		"allow:downloads",
+		"allow:localstorage"
+	]
 }
