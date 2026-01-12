@@ -11,6 +11,11 @@ export default defineConfig({
     react(),
     postProcessPlugin(),
   ],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
   build: {
     rolldownOptions: {
       input: {
