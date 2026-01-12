@@ -4,8 +4,10 @@
 	"version": "0.0.0",
 	"type": "module",
 	"scripts": {
-		"dev:penpot_color_copy": "concurrently \"vite build --watch\" \"vite preview\"",
-		"build:penpot_color_copy": "vite build",
+		"dev:penpot_color_copy": "concurrently \"pnpm run build_watch:penpot_color_copy\" \"pnpm run preview:penpot_color_copy\"",
+		"build_watch:penpot_color_copy": "vite build --watch",
+		"build:penpot_color_copy": "tsc -b && npx rimraf dist && vite build",
+		"preview:penpot_color_copy": "vite preview",
 		"prettier:penpot_color_copy": "prettier . --write"
 	},
 	"dependencies": {
