@@ -6,5 +6,5 @@ type PenpotMessage<T extends MessageType> = {
 }
 
 type UiMessage<T extends MessageType> = T extends 'DEMO'
-	? { type: T; data: never }
+	? { type: T; data: Uint8Array }
 	: { type: T; data: never }
