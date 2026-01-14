@@ -77,7 +77,7 @@ export function App() {
 
 					const start = Math.min(nFrom, nTo)
 					const end = Math.max(nFrom, nTo)
-					const padMaxLen = (from.length > 1 && from[0] === '0') ? 2 : 1
+					const padMaxLen = from.length > 1 && from[0] === '0' ? 2 : 1
 
 					for (let j = start; j <= end; j++) {
 						highlights.push(`${code}${String(j).padStart(padMaxLen, '0')}`)
@@ -113,7 +113,7 @@ export function App() {
 			}
 		})
 
-		snedMessageToPenpot({ type: 'GET_CONNECTED_COLORS' })
+		snedMessage('GET_CONNECTED_COLORS')
 	}, [])
 
 	useEffect(() => {
@@ -224,7 +224,7 @@ export function App() {
 					return (
 						<Collapsible key={e.group} open={isOpen} onOpenChange={handleOpenChange(e.group)}>
 							<CollapsibleTrigger asChild>
-								<div className={'pt-4 pb-2 flex w-full cursor-pointer items-center font-bold'}>
+								<div className={'flex w-full cursor-pointer items-center pt-4 pb-2 font-bold'}>
 									<div>
 										{!!subGroupName && (
 											<div className={'text-xs text-gray-400'}>| {subGroupName}</div>
@@ -266,8 +266,11 @@ export function App() {
 	)
 }
 
-function snedMessageToPenpot<T extends MessageType>(msg: PenpotMessage<T>) {
-	parent.postMessage(msg, '*')
+function snedMessage<T extends MessageType>(
+	type: T,
+	...args: PenpotMessage<T> extends { type: any; data: infer D } ? D extends undefined ? [] : [D] : []
+) {
+	parent.postMessage({ type, data: (args as any[])[0] }, '*')
 }
 
 function toUnoColorGroupList(groupLibColors: Record<string, LibraryColor[]>) {

@@ -34,9 +34,16 @@ penpot.ui.onMessage((message: PenpotMessage<MessageType>) => {
 	}
 })
 
-function sendMessage<T extends MessageType>(type: T, data: UiMessage<T>['data']) {
+function sendMessage<T extends MessageType>(
+	type: T,
+	...args: UiMessage<T> extends { type: any; data: infer D }
+		? D extends undefined
+			? []
+			: [D]
+		: []
+) {
 	penpot.ui.sendMessage({
 		type,
-		data,
+		data: (args as any[])[0],
 	})
 }
