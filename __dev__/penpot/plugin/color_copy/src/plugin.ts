@@ -7,11 +7,9 @@ penpot.ui.open('Color Copy', '', {
 })
 
 penpot.ui.onMessage((message: PenpotMessage<MessageType>) => {
-	if (message.type === 'GET_LOCAL_COLORS') {
-		penpot.ui.sendMessage({
-			type: message.type,
-			data: penpot.library.local.colors,
-		})
+	const msg = message
+	if (msg.type === 'GET_LOCAL_COLORS') {
+		sendMessage(msg.type, penpot.library.local.colors)
 	} else if (message.type === 'GET_CONNECTED_COLORS') {
 		const groupColorsList: Record<string, LibraryColor[]> = {}
 
@@ -32,9 +30,13 @@ penpot.ui.onMessage((message: PenpotMessage<MessageType>) => {
 			}
 		})
 
-		penpot.ui.sendMessage({
-			type: message.type,
-			data: groupColorsList,
-		})
+		sendMessage(msg.type, groupColorsList)
 	}
 })
+
+function sendMessage<T extends MessageType>(type: T, data: UiMessage<T>['data']) {
+	penpot.ui.sendMessage({
+		type,
+		data,
+	})
+}
