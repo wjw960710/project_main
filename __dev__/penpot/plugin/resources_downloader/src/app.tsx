@@ -1,24 +1,93 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import JSZip from 'jszip'
 
 export function App() {
+	const [groupLibComponents, setGroupLibComponents] = useState<UiGroupLibComponent[]>([])
+
 	useEffect(() => {
 		window.addEventListener('message', (event: MessageEvent<UiMessage<MessageType>>) => {
 			const msg = event.data
 
-			if (msg.type === 'DEMO') {
-				console.log(msg.data)
-				downloadUint8Array(msg.data, 'test_file.png', 'application/transit+json')
+			if (msg.type === 'GET_GROUP_LIB_COMPONENTS') {
+				setGroupLibComponents(msg.data)
+			} else if (msg.type === 'EXPORT') {
+				if (msg.data.length > 1) {
+					// 多個檔案：打包成 ZIP
+					const zip = new JSZip()
+
+					msg.data.forEach((uint8, index) => {
+						// 這裡假設檔案名稱為 test_file_{index}.png，你可以根據需求調整
+						zip.file(`file_${index + 1}.png`, uint8)
+					})
+
+					zip.generateAsync({ type: 'uint8array' }).then(content => {
+						downloadUint8Array(content, 'files.zip', 'application/zip')
+					})
+				} else if (msg.data.length === 1) {
+					// 單一檔案
+					downloadUint8Array(msg.data[0], 'test_file.png', 'image/png')
+				}
 			}
 		})
 
-		snedMessageToPenpot({ type: 'DEMO' })
+		snedMessage('GET_GROUP_LIB_COMPONENTS')
 	}, [])
 
-	return <div>Resources Downloader</div>
+	function handleDownload
+	(ids: [string, string]) {
+		return () => {
+			snedMessage('EXPORT', {
+				ids,
+				config: { type: 'png' },
+			})
+		}
+	}
+
+	function handleDownloadList(groupId: string, libComps: UiLibComp[]) {
+		return () => {
+			snedMessage('EXPORT', libComps.map(e => ({ ids: [groupId, e.id], config: { type: 'png' } })))
+		}
+	}
+
+	return (
+		<div>
+			{groupLibComponents.map(e => {
+				return (
+					<div key={e.name}>
+						<div className={'cursor-pointer'} onClick={handleDownloadList(e.id, e.list)}>
+							{e.name}
+						</div>
+						{e.list.map(f => (
+							<div
+								className={'cursor-pointer pl-2'}
+								key={f.name}
+								onClick={handleDownload([e.id, f.id])}
+							>
+								{f.name} | {f.path}
+							</div>
+						))}
+					</div>
+				)
+			})}
+		</div>
+	)
 }
 
-function snedMessageToPenpot<T extends MessageType>(msg: PenpotMessage<T>) {
-	parent.postMessage(msg, '*')
+function snedMessage<T extends MessageType>(
+	type: T,
+	...args: PenpotMessage<T> extends { type: any; data: infer D }
+		? D extends undefined
+			? []
+			: [D]
+		: []
+) {
+	parent.postMessage(
+		{
+			type,
+			data: (args as any[])[0],
+		},
+		'*',
+	)
 }
 
 /**
