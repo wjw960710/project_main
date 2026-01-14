@@ -15,7 +15,7 @@ export function App() {
   function updateCount () {
     const newCount = count + 1
     setCount(newCount)
-    snedMessageToPenpot({type: 'COUNT', data: newCount})
+    snedMessage('COUNT', newCount)
   }
 
   return <div className="min-h-screen min-w-full bg-white flex items-center content-center justify-center flex-wrap">
@@ -27,8 +27,21 @@ export function App() {
   </div>
 }
 
-function snedMessageToPenpot <T extends MessageType>(msg: PenpotMessage<T>) {
-  parent.postMessage(msg, '*')
+function snedMessage<T extends MessageType>(
+  type: T,
+  ...args: PenpotMessage<T> extends { type: any; data: infer D }
+    ? D extends undefined
+      ? []
+      : [D]
+    : []
+) {
+  parent.postMessage(
+    {
+      type,
+      data: (args as any[])[0],
+    },
+    '*',
+  )
 }
 
 function onMessage <T extends MessageType>(event: MessageEvent<UiMessage<T>>, type: T, callback: (event: MessageEvent<UiMessage<T>>) => void) {
