@@ -6,8 +6,10 @@ type PenpotMessage<T extends MessageType> = {
 	type: T
 }
 
-type UiMessage<T extends MessageType> = T extends 'GET_LOCAL_COLORS'
-	? { type: T; data: import('@penpot/plugin-types').LibraryColor[] }
+// prettier-ignore
+type UiMessage<T extends MessageType> =
+	T extends 'GET_LOCAL_COLORS'
+		? { type: T; data: import('@penpot/plugin-types').LibraryColor[] }
 	: T extends 'GET_CONNECTED_COLORS'
 		? { type: T; data: Record<string, import('@penpot/plugin-types').LibraryColor[]> }
-		: { type: T; data: never }
+	: { type: T; data: never }
