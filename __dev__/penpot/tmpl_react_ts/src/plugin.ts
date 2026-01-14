@@ -1,5 +1,4 @@
-// 為了能線上測試用
-console.log(penpot)
+console.log(penpot) // 為了能線上測試用
 
 penpot.ui.open("Plugin name", "", {
   width: 375,

@@ -1,8 +1,7 @@
 import { MAP_LIB_GROUP_NAME, MAP_NAME } from './constant.ts'
 import type { LibraryColor } from '@penpot/plugin-types'
 
-// 為了能線上測試用
-console.log(penpot)
+console.log(penpot) // 為了能線上測試用
 
 penpot.ui.open('Color Copy', '', {
 	width: 375,

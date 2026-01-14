@@ -1,5 +1,4 @@
-// 為了能線上測試用
-console.log(penpot)
+console.log(penpot) // 為了能線上測試用
 
 penpot.ui.open('Resources Downloader', '', {
 	width: 375,
@@ -21,31 +20,31 @@ penpot.ui.onMessage(async (message: PenpotMessage<MessageType>) => {
 				list: e.components,
 			}))
 
-		sendMessage(msg.type, globalState.groupLibComponents = groupLibComponents)
+		sendMessage(msg.type, (globalState.groupLibComponents = groupLibComponents))
 	} else if (msg.type === 'EXPORT') {
-		const dataList = Array.isArray(msg.data)
-			? msg.data
-			: [msg.data]
+		const dataList = Array.isArray(msg.data) ? msg.data : [msg.data]
 
 		const res: UiMsgExportData = {
 			name: 'undefined',
 			list: [],
 		}
 		await processInChunks(dataList, 5, async e => {
-			return Promise.all(e.map(async f => {
-				const { ids, config = { type: 'png' } } = f
-				const group = globalState.groupLibComponents.find(g => g.id === ids[0])
-				const component = group?.list?.find(g => g.id === ids[1])
+			return Promise.all(
+				e.map(async f => {
+					const { ids, config = { type: 'png' } } = f
+					const group = globalState.groupLibComponents.find(g => g.id === ids[0])
+					const component = group?.list?.find(g => g.id === ids[1])
 
-				const u8Arr = await component?.mainInstance().export(config)
-				if (u8Arr) {
-					res.name = group!.name
-					res.list.push({
-						name: component!.name,
-						file: u8Arr,
-					})
-				}
-			}))
+					const u8Arr = await component?.mainInstance().export(config)
+					if (u8Arr) {
+						res.name = group!.name
+						res.list.push({
+							name: component!.name,
+							file: u8Arr,
+						})
+					}
+				}),
+			)
 		})
 
 		sendMessage(msg.type, res)
