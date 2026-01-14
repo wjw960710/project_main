@@ -27,7 +27,10 @@ penpot.ui.onMessage(async (message: PenpotMessage<MessageType>) => {
 			? msg.data
 			: [msg.data]
 
-		const res: Uint8Array[] = []
+		const res: UiMsgExportData = {
+			name: 'undefined',
+			list: [],
+		}
 		await processInChunks(dataList, 5, async e => {
 			return Promise.all(e.map(async f => {
 				const { ids, config = { type: 'png' } } = f
@@ -35,7 +38,13 @@ penpot.ui.onMessage(async (message: PenpotMessage<MessageType>) => {
 				const component = group?.list?.find(g => g.id === ids[1])
 
 				const u8Arr = await component?.mainInstance().export(config)
-				if (u8Arr) res.push(u8Arr)
+				if (u8Arr) {
+					res.name = group!.name
+					res.list.push({
+						name: component!.name,
+						file: u8Arr,
+					})
+				}
 			}))
 		})
 

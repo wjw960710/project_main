@@ -4,9 +4,17 @@ type MessageType =
 
 type UiLibComp = Pick<import('@penpot/plugin-types').LibraryComponent, 'id' | 'libraryId' | 'name' | 'path'>
 
-type ExportData = {
+type PenpotMsgExportData = {
 	ids: [string /* 群組 ID */, string /* 元件 ID */]
 	config: import('@penpot/plugin-types').Export
+}
+
+type UiMsgExportData = {
+	name: string
+	list: {
+		name: string
+		file: Uint8Array
+	}[]
 }
 
 type GroupLibComponent<Child extends UiLibComp> = {
@@ -25,7 +33,7 @@ type PluginGroupLibComponent = GroupLibComponent<
 type PenpotMessage<T extends MessageType> = T extends 'EXPORT'
 	? {
 			type: T
-			data: ExportData | ExportData[]
+			data: PenpotMsgExportData | PenpotMsgExportData[]
 		}
 	: { type: T; data: undefined }
 
@@ -33,5 +41,5 @@ type PenpotMessage<T extends MessageType> = T extends 'EXPORT'
 type UiMessage<T extends MessageType> = T extends 'GET_GROUP_LIB_COMPONENTS'
 	? { type: T; data: UiGroupLibComponent[] }
 	: T extends 'EXPORT'
-		? { type: T; data: Uint8Array[] }
+		? { type: T; data: UiMsgExportData }
 		: { type: T; data: undefined }

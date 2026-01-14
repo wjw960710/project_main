@@ -11,21 +11,30 @@ export function App() {
 			if (msg.type === 'GET_GROUP_LIB_COMPONENTS') {
 				setGroupLibComponents(msg.data)
 			} else if (msg.type === 'EXPORT') {
-				if (msg.data.length > 1) {
+				if (msg.data.list.length > 1) {
 					// 多個檔案：打包成 ZIP
 					const zip = new JSZip()
+					const nameIdxObj: Record<string, number> = {}
 
-					msg.data.forEach((uint8, index) => {
-						// 這裡假設檔案名稱為 test_file_{index}.png，你可以根據需求調整
-						zip.file(`file_${index + 1}.png`, uint8)
+					msg.data.list.forEach(exportData => {
+						if (exportData.name in nameIdxObj) nameIdxObj[exportData.name]++
+						else nameIdxObj[exportData.name] = 0
+
+						let fileName = exportData.name
+						if (!!nameIdxObj[exportData.name]) {
+							fileName += ` (${nameIdxObj[exportData.name]})`
+						}
+
+						zip.file(`${fileName}.png`, exportData.file)
 					})
 
 					zip.generateAsync({ type: 'uint8array' }).then(content => {
-						downloadUint8Array(content, 'files.zip', 'application/zip')
+						downloadUint8Array(content, `${msg.data.name}.zip`, 'application/zip')
 					})
-				} else if (msg.data.length === 1) {
+				} else if (msg.data.list.length === 1) {
 					// 單一檔案
-					downloadUint8Array(msg.data[0], 'test_file.png', 'image/png')
+					const exportData = msg.data.list[0]
+					downloadUint8Array(exportData.file, `${exportData.name}.png`, 'image/png')
 				}
 			}
 		})
@@ -33,8 +42,7 @@ export function App() {
 		snedMessage('GET_GROUP_LIB_COMPONENTS')
 	}, [])
 
-	function handleDownload
-	(ids: [string, string]) {
+	function handleDownload(ids: [string, string]) {
 		return () => {
 			snedMessage('EXPORT', {
 				ids,
@@ -45,7 +53,10 @@ export function App() {
 
 	function handleDownloadList(groupId: string, libComps: UiLibComp[]) {
 		return () => {
-			snedMessage('EXPORT', libComps.map(e => ({ ids: [groupId, e.id], config: { type: 'png' } })))
+			snedMessage(
+				'EXPORT',
+				libComps.map(e => ({ ids: [groupId, e.id], config: { type: 'png' } })),
+			)
 		}
 	}
 
