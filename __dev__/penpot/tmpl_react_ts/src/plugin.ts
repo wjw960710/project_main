@@ -1,6 +1,9 @@
+import {name as manifestName} from '../public/manifest.json'
+import {version as pkgVersion} from '../package.json'
+
 console.log(penpot) // 為了能線上測試用
 
-penpot.ui.open("Plugin name", "", {
+penpot.ui.open(`${manifestName} v${pkgVersion}`, "", {
   width: 375,
   height: 500,
 })

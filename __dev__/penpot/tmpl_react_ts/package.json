@@ -1,12 +1,14 @@
 {
-  "name": "plugin-name",
+  "name": "penpot_plugin_tmpl_react_ts",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev:plugin_name": "concurrently \"vite build --watch\" \"vite preview\"",
-    "build:plugin_name": "vite build",
-    "prettier:plugin_name": "prettier . --write"
+    "dev:pp_tmpl_rts": "concurrently \"pnpm run build_watch:pp_tmpl_rts\" \"pnpm run preview:pp_tmpl_rts\"",
+    "build_watch:pp_tmpl_rts": "vite build --watch",
+    "build:pp_tmpl_rts": "tsc -b && npx rimraf dist && vite build",
+    "preview:pp_tmpl_rts": "vite preview",
+    "prettier:pp_tmpl_rts": "prettier . --write"
   },
   "dependencies": {
     "@penpot/plugin-styles": "^1.3.2",

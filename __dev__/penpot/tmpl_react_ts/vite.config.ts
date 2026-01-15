@@ -6,7 +6,7 @@ import {build as esbuild} from "esbuild";
 import manifest from './public/manifest.json'
 
 const PROJECT_DIR = manifest.name.replace(/\s/g, '_').toLowerCase()
-const VITE_BASE = `plugins/${PROJECT_DIR}`
+const VITE_BASE = `plugin/${PROJECT_DIR}`
 const VITE_OUT_DIR = `dist/${VITE_BASE}`
 
 // https://vite.dev/config/
@@ -47,7 +47,7 @@ function postProcessPlugin () {
   return {
     name: 'post-process-plugin',
     closeBundle: async () => {
-      const pluginPath = path.resolve(__dirname, 'dist/plugin.js')
+      const pluginPath = path.resolve(__dirname, `${VITE_OUT_DIR}/plugin.js`)
 
       console.log('正在使用 esbuild 重新封裝 plugin.js...')
 
