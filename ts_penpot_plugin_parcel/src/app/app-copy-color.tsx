@@ -15,18 +15,15 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/shadcn-official/component-ui/select.tsx'
-import { BsCopy, BsQuestionCircleFill } from 'react-icons/bs'
+import { BsCopy, BsDashLg, BsPlusLg, BsQuestionCircleFill } from 'react-icons/bs'
 import { Input } from '@/shadcn-official/component-ui/input.tsx'
-import { toast, Toaster } from 'sonner'
+import { toast } from 'sonner'
 import {
 	Collapsible,
 	CollapsibleContent,
 	CollapsibleTrigger,
 } from '@/shadcn-official/component-ui/collapsible.tsx'
-import { BsPlusLg } from 'react-icons/bs'
-import { BsDashLg } from 'react-icons/bs'
-import { copyToClipboard } from '@/util/action-ui.ts'
-import { snedMessage } from '@/util/action-ui.ts'
+import { copyToClipboard, snedMessage } from '@/util/action-ui.ts'
 
 type UnoGroupColor = { group: string; list: string[] }
 
@@ -140,7 +137,10 @@ export function App() {
 
 	function handleChangeSearch(key: keyof typeof searchState) {
 		return (ev: string | ChangeEvent<HTMLInputElement>) => {
-			setSearchState(e => ({ ...e, [key]: typeof ev === 'string' ? ev : ev.target.value }))
+			setSearchState(e => ({
+				...e,
+				[key]: typeof ev === 'string' ? ev : ev.target.value,
+			}))
 		}
 	}
 
@@ -178,8 +178,7 @@ export function App() {
 
 	return (
 		<div className="min-h-screen min-w-full bg-white text-[0.75rem] text-black">
-			<Toaster richColors />
-			<div className="w-full py-2 pr-2">
+			<div className="w-full pb-2 pr-2">
 				<Select value={searchState.group} onValueChange={handleChangeSearch('group')}>
 					<SelectTrigger className="w-full">
 						<SelectValue />
@@ -332,7 +331,9 @@ function toUnoColorGroupList(groupLibColors: Record<string, LibraryColor[]>) {
 
 function sortColorNameList(
 	colorList: LibraryColor[],
-	{ transformElement } = {} as { transformElement: (el: LibraryColor) => LibraryColor },
+	{ transformElement } = {} as {
+		transformElement: (el: LibraryColor) => LibraryColor
+	},
 ) {
 	const regex = /^([A-z]+)(\d+)/
 
