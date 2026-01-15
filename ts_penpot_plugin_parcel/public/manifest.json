@@ -1,8 +1,8 @@
 {
-	"name": "Color Copy",
-	"description": "顏色複製",
-	"code": "/plugins/color_copy/plugin.js",
-	"icon": "/plugins/color_copy/icon.png",
+	"name": "Parcel",
+	"description": "工具箱",
+	"code": "/plugin/parcel/plugin.js",
+	"icon": "/plugin/parcel/icon.png",
 	"permissions": [
 		"content:read",
 		"content:write",

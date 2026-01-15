@@ -1,14 +1,14 @@
 {
-	"name": "penpot_color_copy",
+	"name": "penpot_plugin_parcel",
 	"private": true,
 	"version": "0.0.0",
 	"type": "module",
 	"scripts": {
-		"dev:penpot_color_copy": "concurrently \"pnpm run build_watch:penpot_color_copy\" \"pnpm run preview:penpot_color_copy\"",
-		"build_watch:penpot_color_copy": "vite build --watch",
-		"build:penpot_color_copy": "tsc -b && npx rimraf dist && vite build",
-		"preview:penpot_color_copy": "vite preview",
-		"prettier:penpot_color_copy": "prettier . --write"
+		"dev:pp_parcel": "concurrently \"pnpm run build_watch:pp_parcel\" \"pnpm run preview:pp_parcel\"",
+		"build_watch:pp_parcel": "vite build --watch",
+		"build:pp_parcel": "tsc -b && npx rimraf dist && vite build",
+		"preview:pp_parcel": "vite preview",
+		"prettier:pp_parcel": "prettier . --write"
 	},
 	"dependencies": {
 		"@penpot/plugin-styles": "^1.3.2",

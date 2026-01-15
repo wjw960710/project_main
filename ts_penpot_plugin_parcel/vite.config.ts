@@ -6,7 +6,7 @@ import path from 'node:path'
 import manifest from './public/manifest.json'
 
 const PROJECT_DIR = manifest.name.replace(/\s/g, '_').toLowerCase()
-const VITE_BASE = `plugins/${PROJECT_DIR}`
+const VITE_BASE = `plugin/${PROJECT_DIR}`
 const VITE_OUT_DIR = `dist/${VITE_BASE}`
 
 // https://vite.dev/config/
