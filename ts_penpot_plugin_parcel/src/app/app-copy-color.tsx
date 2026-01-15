@@ -25,7 +25,8 @@ import {
 } from '@/shadcn-official/component-ui/collapsible.tsx'
 import { BsPlusLg } from 'react-icons/bs'
 import { BsDashLg } from 'react-icons/bs'
-import { copyToClipboard } from '@/util/action.ts'
+import { copyToClipboard } from '@/util/action-ui.ts'
+import { snedMessage } from '@/util/action-ui.ts'
 
 type UnoGroupColor = { group: string; list: string[] }
 
@@ -274,13 +275,6 @@ export function App() {
 			</div>
 		</div>
 	)
-}
-
-function snedMessage<T extends MessageType>(
-	type: T,
-	...args: PenpotMessage<T> extends { type: any; data: infer D } ? D extends undefined ? [] : [D] : []
-) {
-	parent.postMessage({ type, data: (args as any[])[0] }, '*')
 }
 
 function toUnoColorGroupList(groupLibColors: Record<string, LibraryColor[]>) {

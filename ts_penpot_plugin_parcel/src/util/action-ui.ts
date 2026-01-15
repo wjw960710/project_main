@@ -19,3 +19,20 @@ export function copyToClipboard (multilineText: string, name?: string) {
 	}
 	document.body.removeChild(textArea)
 }
+
+export function snedMessage<T extends MessageType>(
+	type: T,
+	...args: PenpotMessage<T> extends { type: any; data: infer D }
+		? D extends undefined
+			? []
+			: [D]
+		: []
+) {
+	parent.postMessage(
+		{
+			type,
+			data: (args as any[])[0],
+		},
+		'*',
+	)
+}

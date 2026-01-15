@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import JSZip from 'jszip'
+import { snedMessage } from '@/util/action-ui.ts'
 
 export function App() {
 	const [groupLibComponents, setGroupLibComponents] = useState<UiGroupLibComponent[]>([])
@@ -81,23 +82,6 @@ export function App() {
 				)
 			})}
 		</div>
-	)
-}
-
-function snedMessage<T extends MessageType>(
-	type: T,
-	...args: PenpotMessage<T> extends { type: any; data: infer D }
-		? D extends undefined
-			? []
-			: [D]
-		: []
-) {
-	parent.postMessage(
-		{
-			type,
-			data: (args as any[])[0],
-		},
-		'*',
 	)
 }
 

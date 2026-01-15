@@ -4,7 +4,7 @@ import { isDev } from '@/constant/vite.ts'
 
 bootstrap(
 	isDev
-		? import('@/app/app-copy-color.tsx')
+		? import('@/app/app-resources-downloader.tsx')
 		: import('@/app/app.tsx')
 )
 
