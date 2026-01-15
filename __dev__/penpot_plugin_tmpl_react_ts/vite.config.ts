@@ -16,7 +16,7 @@ export default defineConfig({
     react(),
     postProcessPlugin(),
   ],
-  base: VITE_BASE,
+  base: `/${VITE_BASE}`,
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
