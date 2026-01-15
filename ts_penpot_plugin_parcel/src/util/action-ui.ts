@@ -1,6 +1,6 @@
 import { toast } from 'sonner'
 
-export function copyToClipboard (multilineText: string, name?: string) {
+export function copyToClipboard(multilineText: string, name?: string) {
 	let _name = ''
 	if (name?.trim()) {
 		_name += `：${name}`

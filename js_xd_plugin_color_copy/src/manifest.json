@@ -1,30 +1,30 @@
- {
-  "id": "xd_color_copy_plugin",
-  "name": "顏色複製",
-  "version": "0.0.0",
-  "description": "一級棒",
-  "summary": "超級棒",
-  "languages": ["en", "zh"],
-  "author": "俊緯",
-  "host": {
-    "app": "XD",
-    "minVersion": "13.0"
-  },
-  "uiEntryPoints": [
-    {
-      "type": "menu",
-      "label": "複製 Unocss 格式顏色",
-      "commandId": "copyUnoAssetsColors"
-    },
-    {
-      "type": "menu",
-      "label": "複製 Unocss var 值格式顏色",
-      "commandId": "copyUnoVarValAssetsColors"
-    },
-    {
-      "type": "menu",
-      "label": "複製 CSS 變數格式顏色",
-      "commandId": "copyCssVarAssetsColors"
-    }
-  ]
+{
+	"id": "xd_color_copy_plugin",
+	"name": "顏色複製",
+	"version": "0.0.0",
+	"description": "一級棒",
+	"summary": "超級棒",
+	"languages": ["en", "zh"],
+	"author": "俊緯",
+	"host": {
+		"app": "XD",
+		"minVersion": "13.0"
+	},
+	"uiEntryPoints": [
+		{
+			"type": "menu",
+			"label": "複製 Unocss 格式顏色",
+			"commandId": "copyUnoAssetsColors"
+		},
+		{
+			"type": "menu",
+			"label": "複製 Unocss var 值格式顏色",
+			"commandId": "copyUnoVarValAssetsColors"
+		},
+		{
+			"type": "menu",
+			"label": "複製 CSS 變數格式顏色",
+			"commandId": "copyCssVarAssetsColors"
+		}
+	]
 }

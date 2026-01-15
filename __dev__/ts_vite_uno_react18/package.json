@@ -1,26 +1,26 @@
 {
-  "name": "ts_vite_react",
-  "private": true,
-  "version": "0.0.0",
-  "type": "module",
-  "scripts": {
-    "dev:ts_vite_react": "vite",
-    "build:ts_vite_react": "tsc -b && vite build",
-    "preview:ts_vite_react": "vite preview"
-  },
-  "dependencies": {
-    "@unocss/reset": "^66.5.12",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
-  },
-  "devDependencies": {
-    "@types/node": "^24.10.1",
-    "@types/react": "^18.3.27",
-    "@types/react-dom": "^18.3.7",
-    "@vitejs/plugin-react-swc": "^4.2.2",
-    "globals": "^16.5.0",
-    "typescript": "~5.9.3",
-    "unocss": "^66.5.12",
-    "vite": "^7.2.4"
-  }
+	"name": "ts_vite_react",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev:ts_vite_react": "vite",
+		"build:ts_vite_react": "tsc -b && vite build",
+		"preview:ts_vite_react": "vite preview"
+	},
+	"dependencies": {
+		"@unocss/reset": "^66.5.12",
+		"react": "^18.3.1",
+		"react-dom": "^18.3.1"
+	},
+	"devDependencies": {
+		"@types/node": "^24.10.1",
+		"@types/react": "^18.3.27",
+		"@types/react-dom": "^18.3.7",
+		"@vitejs/plugin-react-swc": "^4.2.2",
+		"globals": "^16.5.0",
+		"typescript": "~5.9.3",
+		"unocss": "^66.5.12",
+		"vite": "^7.2.4"
+	}
 }

@@ -6,7 +6,10 @@ type MessageType =
 	| 'GET_GROUP_LIB_COMPONENTS' // 取得元件列表
 	| 'EXPORT' // 取得導出數據
 
-type UiLibComp = Pick<import('@penpot/plugin-types').LibraryComponent, 'id' | 'libraryId' | 'name' | 'path'>
+type UiLibComp = Pick<
+	import('@penpot/plugin-types').LibraryComponent,
+	'id' | 'libraryId' | 'name' | 'path'
+>
 
 type PenpotMsgExportData = {
 	ids: [string /* 群組 ID */, string /* 元件 ID */]

@@ -28,27 +28,27 @@ console.log('-------------')
 filterText(text3)
 console.log('-------------')
 filterText(text4)
-function filterText (text: string) {
-  const texts = text.split(/[\s\n、，,]+/)
-  const wordList: string[] = []
+function filterText(text: string) {
+	const texts = text.split(/[\s\n、，,]+/)
+	const wordList: string[] = []
 
-  texts.forEach(e => {
-    const word = e.trim()
-    if (!word.length) return
+	texts.forEach(e => {
+		const word = e.trim()
+		if (!word.length) return
 
-    const [, name, from, to] = word.match(/^(.+[^0])(\d+)[\-~](\d+)$/) || []
-    if (name) {
-      const nFrom = Number(from)
-      const nTo = Number(to)
-      console.log(name, from, to, nFrom, nTo)
-      for (let i = nFrom; i <= nTo; i++) {
-        wordList.push(`${name}${String(i).padStart(from.length, '0')}`)
-      }
-    } else {
-      wordList.push(word)
-    }
-  })
+		const [, name, from, to] = word.match(/^(.+[^0])(\d+)[\-~](\d+)$/) || []
+		if (name) {
+			const nFrom = Number(from)
+			const nTo = Number(to)
+			console.log(name, from, to, nFrom, nTo)
+			for (let i = nFrom; i <= nTo; i++) {
+				wordList.push(`${name}${String(i).padStart(from.length, '0')}`)
+			}
+		} else {
+			wordList.push(word)
+		}
+	})
 
-  console.log(texts)
-  console.log(wordList)
+	console.log(texts)
+	console.log(wordList)
 }

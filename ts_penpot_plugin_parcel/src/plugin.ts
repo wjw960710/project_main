@@ -1,7 +1,7 @@
 import { MAP_LIB_GROUP_NAME, MAP_NAME } from '@/constant/color-copy.ts'
 import type { LibraryColor } from '@penpot/plugin-types'
-import {name as manifestName} from '../public/manifest.json'
-import {version as pkgVersion} from '../package.json'
+import { name as manifestName } from '../public/manifest.json'
+import { version as pkgVersion } from '../package.json'
 
 console.log(penpot) // 為了能線上測試用
 

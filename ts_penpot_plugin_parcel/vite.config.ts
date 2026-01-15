@@ -10,7 +10,7 @@ const VITE_BASE = `plugin/${PROJECT_DIR}`
 const VITE_OUT_DIR = `dist/${VITE_BASE}`
 
 // https://vite.dev/config/
-export default defineConfig(({mode}) => {
+export default defineConfig(({ mode }) => {
 	return {
 		plugins: [tailwindcss(), react(), postProcessPlugin()],
 		base: `/${VITE_BASE}`,

@@ -1,21 +1,21 @@
 {
-  "name": "ts_xd_reader",
-  "version": "1.0.0",
-  "main": "index.js",
-  "type": "module",
-  "scripts": {
-    "dev:ts_xd_reader": "tsx main.ts"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
-  "dependencies": {
-    "adm-zip": "^0.5.16"
-  },
-  "devDependencies": {
-    "@types/adm-zip": "^0.5.7",
-    "tsx": "^4.20.6",
-    "typescript": "^5.9.3"
-  }
+	"name": "ts_xd_reader",
+	"version": "1.0.0",
+	"description": "",
+	"keywords": [],
+	"license": "ISC",
+	"author": "",
+	"type": "module",
+	"main": "index.js",
+	"scripts": {
+		"dev:ts_xd_reader": "tsx main.ts"
+	},
+	"dependencies": {
+		"adm-zip": "^0.5.16"
+	},
+	"devDependencies": {
+		"@types/adm-zip": "^0.5.7",
+		"tsx": "^4.20.6",
+		"typescript": "^5.9.3"
+	}
 }

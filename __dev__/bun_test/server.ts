@@ -1,11 +1,11 @@
-import { serve } from "bun";
-import index from "./index.html";
+import { serve } from 'bun'
+import index from './index.html'
 
 const server = serve({
-  routes: {
-    "/": index,
-    "/api/hello": { GET: () => Response.json({ message: "Hello from API" }) },
-  },
-});
+	routes: {
+		'/': index,
+		'/api/hello': { GET: () => Response.json({ message: 'Hello from API' }) },
+	},
+})
 
-console.log(`Server running at http://localhost:${server.port}`);
+console.log(`Server running at http://localhost:${server.port}`)

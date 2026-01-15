@@ -1,16 +1,16 @@
 {
-  "name": "Tmpl React Ts",
-  "description": "Plugin description",
-  "code": "/plugin/tmpl_react_ts/plugin.js",
-  "icon": "/plugin/tmpl_react_ts/icon.png",
-  "permissions": [
-    "content:read",
-    "content:write",
-    "library:read",
-    "library:write",
-    "user:read",
-    "comment:read",
-    "comment:write",
-    "allow:downloads"
-  ]
+	"name": "Tmpl React Ts",
+	"description": "Plugin description",
+	"code": "/plugin/tmpl_react_ts/plugin.js",
+	"icon": "/plugin/tmpl_react_ts/icon.png",
+	"permissions": [
+		"content:read",
+		"content:write",
+		"library:read",
+		"library:write",
+		"user:read",
+		"comment:read",
+		"comment:write",
+		"allow:downloads"
+	]
 }

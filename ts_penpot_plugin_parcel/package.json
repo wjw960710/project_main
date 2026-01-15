@@ -1,7 +1,7 @@
 {
 	"name": "penpot_plugin_parcel",
-	"private": true,
 	"version": "0.0.0",
+	"private": true,
 	"type": "module",
 	"scripts": {
 		"dev:pp_parcel": "concurrently \"pnpm run build_watch:pp_parcel --mode development\" \"pnpm run preview:pp_parcel --mode development\"",
