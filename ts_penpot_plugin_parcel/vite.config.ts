@@ -10,30 +10,35 @@ const VITE_BASE = `plugin/${PROJECT_DIR}`
 const VITE_OUT_DIR = `dist/${VITE_BASE}`
 
 // https://vite.dev/config/
-export default defineConfig({
-	plugins: [tailwindcss(), react(), postProcessPlugin()],
-	base: VITE_BASE,
-	resolve: {
-		alias: {
-			'@': path.resolve(__dirname, './src'),
-		},
-	},
-	build: {
-		outDir: VITE_OUT_DIR,
-		rolldownOptions: {
-			input: {
-				plugin: 'src/plugin.ts',
-				index: './index.html',
-			},
-			output: {
-				entryFileNames: '[name].js',
+export default defineConfig(({mode}) => {
+	return {
+		plugins: [tailwindcss(), react(), postProcessPlugin()],
+		base: `/${VITE_BASE}`,
+		resolve: {
+			alias: {
+				'@': path.resolve(__dirname, './src'),
 			},
 		},
-	},
-	preview: {
-		port: 4444,
-		cors: true,
-	},
+		preview: {
+			port: 4444,
+			cors: true,
+		},
+		define: {
+			VITE_MODE: `'${mode}'`,
+		},
+		build: {
+			outDir: VITE_OUT_DIR,
+			rolldownOptions: {
+				input: {
+					plugin: 'src/plugin.ts',
+					index: 'index.html',
+				},
+				output: {
+					entryFileNames: '[name].js',
+				},
+			},
+		},
+	}
 })
 
 /**

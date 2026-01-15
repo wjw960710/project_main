@@ -1,21 +1,31 @@
 import { type ChangeEvent, type MouseEvent, useEffect, useMemo, useState } from 'react'
 import type { LibraryColor } from '@penpot/plugin-types'
 import { clone, debounce } from 'radash'
-import { MAP_LIB_UI_GROUP_NAME, MAP_NAME } from './constant.ts'
-import { HighlightedText } from './components/ui/highlighted-text.tsx'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip.tsx'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select.tsx'
+import { MAP_LIB_UI_GROUP_NAME, MAP_NAME } from '@/constant/color-copy.ts'
+import { HighlightedText } from '@/shadcn-official/component-ui/highlighted-text.tsx'
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from '@/shadcn-official/component-ui/tooltip.tsx'
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@/shadcn-official/component-ui/select.tsx'
 import { BsCopy, BsQuestionCircleFill } from 'react-icons/bs'
-import { Input } from '@/components/ui/input.tsx'
+import { Input } from '@/shadcn-official/component-ui/input.tsx'
 import { toast, Toaster } from 'sonner'
 import {
 	Collapsible,
 	CollapsibleContent,
 	CollapsibleTrigger,
-} from '@/components/ui/collapsible.tsx'
+} from '@/shadcn-official/component-ui/collapsible.tsx'
 import { BsPlusLg } from 'react-icons/bs'
 import { BsDashLg } from 'react-icons/bs'
-import { copyToClipboard } from '@/helper.ts'
+import { copyToClipboard } from '@/util/action.ts'
 
 type UnoGroupColor = { group: string; list: string[] }
 

@@ -1,4 +1,4 @@
-import { MAP_LIB_GROUP_NAME, MAP_NAME } from './constant.ts'
+import { MAP_LIB_GROUP_NAME, MAP_NAME } from '@/constant/color-copy.ts'
 import type { LibraryColor } from '@penpot/plugin-types'
 import {name as manifestName} from '../public/manifest.json'
 import {version as pkgVersion} from '../package.json'

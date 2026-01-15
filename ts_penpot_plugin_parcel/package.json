@@ -4,7 +4,7 @@
 	"version": "0.0.0",
 	"type": "module",
 	"scripts": {
-		"dev:pp_parcel": "concurrently \"pnpm run build_watch:pp_parcel\" \"pnpm run preview:pp_parcel\"",
+		"dev:pp_parcel": "concurrently \"pnpm run build_watch:pp_parcel --mode development\" \"pnpm run preview:pp_parcel --mode development\"",
 		"build_watch:pp_parcel": "vite build --watch",
 		"build:pp_parcel": "tsc -b && npx rimraf dist && vite build",
 		"preview:pp_parcel": "vite preview",
