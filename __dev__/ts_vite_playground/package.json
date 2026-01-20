@@ -1,12 +1,12 @@
 {
-	"name": "ts_vite_react",
+	"name": "ts_vite_playground",
 	"version": "0.0.0",
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"dev:ts_vite_react": "vite",
-		"build:ts_vite_react": "tsc -b && vite build",
-		"preview:ts_vite_react": "vite preview"
+		"dev:ts_vite_playground": "vite",
+		"build:ts_vite_playground": "tsc -b && vite build",
+		"preview:ts_vite_playground": "vite preview"
 	},
 	"dependencies": {
 		"@unocss/reset": "^66.5.12",
