@@ -28,6 +28,7 @@ export default defineConfig(({ mode }) => {
 		},
 		build: {
 			outDir: VITE_OUT_DIR,
+			assetsDir: '',
 			rolldownOptions: {
 				input: {
 					plugin: 'src/plugin.ts',
