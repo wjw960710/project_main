@@ -3,28 +3,46 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { build as esbuild } from 'esbuild'
 import path from 'node:path'
-import { omit, shake } from 'radash'
+import { omit, parallel, shake } from 'radash'
 import manifest from './public/manifest.json'
 import fs from 'node:fs'
 import https from 'node:https'
 import fetch from 'node-fetch'
 import fg from 'fast-glob'
-import { parallel } from 'radash'
+import { type ParsedOption } from './build-recipe/cac.ts'
+import minimist from 'minimist'
 
 type Env = Record<keyof ServerEnv, string>
 
 const PROJECT_DIR = manifest.name.replace(/\s/g, '_').toLowerCase()
 const VITE_OUT_DIR = 'dist'
 
+const defaultCliOptions = {
+	'--local <boolean>': {
+		desc: '是否是本地開發模式',
+		defaultValue: false as boolean,
+	},
+	'--upload <string>': {
+		desc: '上傳模式(nexus)',
+		defaultValue: '' as 'nexus',
+	},
+} satisfies Record<string, any>
+type CliOptions = ParsedOption<typeof defaultCliOptions>
+const customExecSymbol = process.argv.indexOf('--')
+const cliOptions = (
+	customExecSymbol > -1 ? omit(minimist(process.argv.slice(customExecSymbol + 1)), ['_']) : {}
+) as CliOptions
+
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
-	const isProduction = mode === 'production'
+	const isLocal = !!cliOptions.local
 	const env = loadEnv(mode, process.cwd(), ['SERVER_', 'VITE_NEXUS_']) as Env
-	const hasNexusConfig = everyNexusConfig(env)
 
-	if (isProduction) {
-		if (!hasNexusConfig) {
-			throw new Error('SERVER_NEXUS_ 配置有缺漏')
+	if (!isLocal) {
+		if (cliOptions.upload === 'nexus') {
+			if (!everyNexusConfig(env)) {
+				throw new Error('SERVER_NEXUS_ 配置有缺漏')
+			}
 		}
 	}
 
@@ -36,14 +54,20 @@ export default defineConfig(({ mode }) => {
 		'/',
 	)
 
-	const VITE_BASE = isProduction
-		? path.posix.join('/repository', env.SERVER_NEXUS_REPOSITORY, env.SERVER_NEXUS_DIRECTORY)
-		: '/'
+	const VITE_BASE = isLocal
+		? '/'
+		: path.posix.join('/repository', env.SERVER_NEXUS_REPOSITORY, env.SERVER_NEXUS_DIRECTORY)
 	const userConfig: UserConfig = {
 		plugins: [
 			tailwindcss(),
 			react(),
-			postProcessPlugin({ env, base: VITE_BASE, outDir: VITE_OUT_DIR, isProduction }),
+			postProcessPlugin({
+				env,
+				cliOptions,
+				base: VITE_BASE,
+				outDir: VITE_OUT_DIR,
+				isLocal,
+			}),
 			myPreviewServerPlugin({ outDir: VITE_OUT_DIR }),
 		],
 		base: VITE_BASE,
@@ -57,7 +81,7 @@ export default defineConfig(({ mode }) => {
 			cors: true,
 		},
 		define: {
-			VITE_MODE: `'${mode}'`,
+			VITE_IS_LOCAL: `${isLocal}`,
 			VITE_BASE: `'${VITE_BASE}'`,
 		},
 		build: {
@@ -107,14 +131,16 @@ function fillLine(text = ' ') {
 
 function postProcessPlugin({
 	env,
+	cliOptions,
 	base,
 	outDir,
-	isProduction,
+	isLocal,
 }: {
 	env: Env
+	cliOptions: CliOptions
 	base: string
 	outDir: string
-	isProduction: boolean
+	isLocal: boolean
 }): Plugin {
 	const distPath = path.join(process.cwd(), outDir)
 
@@ -137,7 +163,7 @@ function postProcessPlugin({
 	}
 
 	async function replaceManifestConfig() {
-		if (!isProduction) return
+		if (isLocal) return
 
 		console.log('開始替換 manifest.json 資源路徑...')
 
@@ -153,7 +179,7 @@ function postProcessPlugin({
 	}
 
 	async function uploadToNexus() {
-		if (!isProduction) return
+		if (isLocal) return
 
 		console.log('正將資源發佈至 Nexus...')
 
@@ -214,7 +240,7 @@ function postProcessPlugin({
 		name: 'post-process-plugin',
 		closeBundle: async function () {
 			await Promise.all([bundlePluginJs(), replaceManifestConfig()])
-			await uploadToNexus()
+			if (cliOptions.upload === 'nexus') await uploadToNexus()
 		},
 	}
 }

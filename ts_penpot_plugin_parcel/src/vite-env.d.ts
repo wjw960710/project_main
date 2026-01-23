@@ -18,5 +18,5 @@ interface ImportMeta {
 	readonly env: ImportMetaEnv
 }
 
-declare const VITE_MODE: string
+declare const VITE_IS_LOCAL: boolean
 declare const VITE_BASE: string
