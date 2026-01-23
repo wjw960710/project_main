@@ -1,5 +1,3 @@
-declare const VITE_MODE: string
-
 type MessageType =
 	| 'GET_LOCAL_COLORS' // 取得本地顏色資源
 	| 'GET_CONNECTED_COLORS' // 取得該檔按所有關聯的顏色資源

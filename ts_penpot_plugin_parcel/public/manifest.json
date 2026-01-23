@@ -1,8 +1,8 @@
 {
 	"name": "Parcel",
 	"description": "工具箱",
-	"code": "/plugin/parcel/plugin.js",
-	"icon": "/plugin/parcel/icon.png",
+	"code": "/plugin.js",
+	"icon": "/icon.png",
 	"permissions": [
 		"content:read",
 		"content:write",

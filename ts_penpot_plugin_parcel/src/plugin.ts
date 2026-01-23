@@ -5,7 +5,7 @@ import { version as pkgVersion } from '../package.json'
 
 console.log(penpot) // 為了能線上測試用
 
-penpot.ui.open(`${manifestName} v${pkgVersion}`, '', {
+penpot.ui.open(`${manifestName} v${pkgVersion}`, `${VITE_NEXUS_BASE}index.html`, {
 	width: 375,
 	height: 500,
 })
