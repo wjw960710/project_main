@@ -10,7 +10,11 @@
 	"scripts": {
 		"watch:script_test": "tsx watch src/main.ts"
 	},
+	"dependencies": {
+		"node-fetch": "^3.3.2"
+	},
 	"devDependencies": {
+		"@types/node": "^25.0.10",
 		"tsx": "^4.21.0"
 	}
 }

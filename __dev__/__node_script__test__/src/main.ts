@@ -1,54 +1,75 @@
-const text = `tripledeposit_img_title
-  tripledeposit_img_light
-tripledeposit_img_money1~3   
-tripledeposit_img_done
-tripledeposit_img_lock
-tripledeposit_img_bonus1~6
-tripledeposit_img_time
-tripledeposit_img_bonus_bg
-tripledeposit_img_bg`
+import fs from 'node:fs'
+import path from 'node:path'
+import https from 'node:https'
+import fetch from 'node-fetch'
 
-const text2 = `
-tripledeposit_img_lock
-tripledeposit_img_bonus01~03
-tripledeposit_img_time`
+uploadToNexus(fs.readFileSync(path.join(process.cwd(), 'src/asset/test.txt')), 'test.txt', {
+	nexusUrl: '',
+	repository: '',
+	username: '',
+	password: '',
+})
 
-const text3 = `account_img_banner_bonus、account_img_banner_bonus_bg_pc02、account_img_banner_bonus_bg
-account_img_banner_bonus_pc02、account_img_banner_bonus_pc、bonus_img_money、account_btn_go`
+/**
+ * 上傳 raw data 到 Nexus
+ * @param data - 要上傳的資料（Buffer, Blob, string 等）
+ * @param filename - 檔案名稱
+ * @param options - Nexus 配置選項
+ */
 
-const text4 = `account_img_banner_bonus、account_img_banner_bonus_bg_pc02-4
-、account_img_banner_bonus_bg
-account_img_banner_bonus_pc02、
-    ,account_img_banner_bonus_pc、bonus_img_money、account_btn_go`
+async function uploadToNexus(
+	data: Buffer | Blob | string,
+	filename: string,
+	options: {
+		nexusUrl: string
+		repository: string
+		username: string
+		password: string
+	},
+) {
+	const { nexusUrl, repository, username, password } = options
+	const url = `${nexusUrl}/service/rest/v1/components?repository=${repository}`
 
-filterText(text)
-console.log('-------------')
-filterText(text2)
-console.log('-------------')
-filterText(text3)
-console.log('-------------')
-filterText(text4)
-function filterText(text: string) {
-	const texts = text.split(/[\s\n、，,]+/)
-	const wordList: string[] = []
+	const credentials = Buffer.from(`${username}:${password}`).toString('base64')
 
-	texts.forEach(e => {
-		const word = e.trim()
-		if (!word.length) return
+	// 添加調試信息
+	console.log('URL:', url)
+	console.log('Repository:', repository)
+	console.log('Username:', username)
+	console.log('Credentials (base64):', credentials)
 
-		const [, name, from, to] = word.match(/^(.+[^0])(\d+)[\-~](\d+)$/) || []
-		if (name) {
-			const nFrom = Number(from)
-			const nTo = Number(to)
-			console.log(name, from, to, nFrom, nTo)
-			for (let i = nFrom; i <= nTo; i++) {
-				wordList.push(`${name}${String(i).padStart(from.length, '0')}`)
-			}
-		} else {
-			wordList.push(word)
+	const formData = new FormData()
+	formData.append('raw.directory', '/penpot/plugin/parcel/')
+	formData.append('raw.asset1', new Blob([data]), filename)
+	formData.append('raw.asset1.filename', filename)
+
+	try {
+		const agent = new https.Agent({
+			rejectUnauthorized: false,
+		})
+		const response = await fetch(url, {
+			method: 'POST',
+			headers: {
+				Authorization: `Basic ${credentials}`,
+			},
+			body: formData,
+			agent,
+		})
+
+		console.log('Status:', response.status)
+		console.log('Status Text:', response.statusText)
+
+		// 讀取錯誤響應內容
+		const responseText = await response.text()
+		console.log('Response:', responseText)
+
+		if (!response.ok) {
+			throw new Error(`上傳失敗: ${response.status} ${response.statusText}\n${responseText}`)
 		}
-	})
 
-	console.log(texts)
-	console.log(wordList)
+		console.log(`✅ 成功上傳 ${filename} 到 Nexus`)
+		return response
+	} catch (error) {
+		console.error('錯誤詳情:', error)
+	}
 }
