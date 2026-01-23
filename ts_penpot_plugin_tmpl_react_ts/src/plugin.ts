@@ -3,7 +3,7 @@ import { version as pkgVersion } from '../package.json'
 
 console.log(penpot) // 為了能線上測試用
 
-penpot.ui.open(`${manifestName} v${pkgVersion}`, '', {
+penpot.ui.open(`${manifestName} v${pkgVersion}`, `?pp_theme=${penpot.theme}`, {
 	width: 375,
 	height: 500,
 })

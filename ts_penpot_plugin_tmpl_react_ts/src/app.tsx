@@ -6,9 +6,10 @@ export function App() {
 
 	useEffect(() => {
 		window.addEventListener('message', (event: MessageEvent<UiMessage<MessageType>>) => {
-			onMessage(event, 'COUNT', _event => {
-				setMsgCount(_event.data.data)
-			})
+			const msg = event.data
+			if (msg.type === 'COUNT') {
+				setMsgCount(msg.data)
+			}
 		})
 	}, [])
 
@@ -19,11 +20,11 @@ export function App() {
 	}
 
 	return (
-		<div className="flex min-h-screen min-w-full flex-wrap content-center items-center justify-center bg-white">
-			<div className="w-full text-center text-[36rem] font-bold">
+		<div className="flex min-h-screen min-w-full flex-wrap content-center items-center justify-center">
+			<div className="w-full text-center text-[36rem] font-bold dark:text-white">
 				Welcome plugin with React-TS and Tailwindcss!
 			</div>
-			<div className={'text-center text-[32rem] text-black'}>
+			<div className={'text-center text-[32rem] dark:text-white'}>
 				<div className={'cursor-pointer'} onClick={updateCount}>
 					From UI: {count}
 				</div>
