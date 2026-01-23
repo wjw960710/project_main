@@ -177,7 +177,7 @@ export function App() {
 	}
 
 	return (
-		<div className="min-h-screen min-w-full bg-white text-[0.75rem] text-black">
+		<div className="min-h-screen min-w-full text-[0.75rem] text-black dark:text-white">
 			<div className="w-full pb-2 pr-2">
 				<Select value={searchState.group} onValueChange={handleChangeSearch('group')}>
 					<SelectTrigger className="w-full">
