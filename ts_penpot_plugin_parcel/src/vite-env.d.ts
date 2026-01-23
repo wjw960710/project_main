@@ -19,4 +19,4 @@ interface ImportMeta {
 }
 
 declare const VITE_MODE: string
-declare const VITE_NEXUS_BASE: string
+declare const VITE_BASE: string

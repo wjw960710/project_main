@@ -1,4 +1,4 @@
-import { defineConfig, loadEnv, type UserConfig } from 'vite'
+import { defineConfig, loadEnv, type Plugin, type UserConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { build as esbuild } from 'esbuild'
@@ -44,6 +44,7 @@ export default defineConfig(({ mode }) => {
 			tailwindcss(),
 			react(),
 			postProcessPlugin({ env, base: VITE_BASE, outDir: VITE_OUT_DIR, isProduction }),
+			myPreviewServerPlugin({ outDir: VITE_OUT_DIR }),
 		],
 		base: VITE_BASE,
 		resolve: {
@@ -57,7 +58,7 @@ export default defineConfig(({ mode }) => {
 		},
 		define: {
 			VITE_MODE: `'${mode}'`,
-			VITE_NEXUS_BASE: `'${VITE_BASE}'`,
+			VITE_BASE: `'${VITE_BASE}'`,
 		},
 		build: {
 			outDir: VITE_OUT_DIR,
@@ -114,7 +115,7 @@ function postProcessPlugin({
 	base: string
 	outDir: string
 	isProduction: boolean
-}) {
+}): Plugin {
 	const distPath = path.join(process.cwd(), outDir)
 
 	async function bundlePluginJs() {
@@ -231,4 +232,23 @@ function everyNexusConfig(config: ServerEnv) {
 
 function getFilename(filepath: string) {
 	return filepath.split(/[/\\]/).pop()!
+}
+
+function myPreviewServerPlugin({ outDir }: { outDir: string }): Plugin {
+	return {
+		name: 'my-preview-server-plugin',
+		configurePreviewServer(server) {
+			server.middlewares.use('/manifest.json', async (_req, res, _next) => {
+				const manifestPath = path.join(outDir, 'manifest.json')
+				const manifest = JSON.parse(await fs.promises.readFile(manifestPath, 'utf-8'))
+
+				manifest.name = `(DEV) ${manifest.name}`
+
+				res.setHeader('Content-Type', 'application/json')
+				res.setHeader('Access-Control-Allow-Origin', '*')
+
+				res.end(JSON.stringify(manifest, null, 2))
+			})
+		},
+	}
 }
