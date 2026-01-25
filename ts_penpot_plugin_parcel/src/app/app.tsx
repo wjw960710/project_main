@@ -1,10 +1,9 @@
 import { App as CopyColorApp } from '@/app/app-copy-color.tsx'
 import { App as ResourcesDownloaderApp } from '@/app/app-resources-downloader.tsx'
 import { Tabs, TabsList, TabsTrigger } from '@/shadcn/official/component-ui/tabs.tsx'
-import { type FC, Fragment, useMemo, useState } from 'react'
-import { MdComputer } from 'react-icons/md'
+import { type FC, useMemo, useState } from 'react'
+import { MdComputer, MdDesignServices } from 'react-icons/md'
 import { Toaster } from '@/shadcn-official/component-ui/sonner.tsx'
-import { MdDesignServices } from 'react-icons/md'
 
 type DeptTab = {
 	key: string
@@ -54,7 +53,7 @@ tabList = tabList.reduce((acc, e) => {
 	e.children = e.children.filter(f => !f.experimental)
 	if (e.children.length) acc.push(e)
 	return acc
-}, [])
+}, [] as DeptTab[])
 
 export function App() {
 	const [deptCurrent, setDeptCurrent] = useState(0)

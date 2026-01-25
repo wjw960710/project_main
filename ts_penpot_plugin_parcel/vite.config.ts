@@ -90,7 +90,7 @@ export default defineConfig(({ mode }) => {
 			rolldownOptions: {
 				input: {
 					plugin: 'src/plugin.ts',
-					index: 'index.html',
+					index: isLocal ? 'index_local.html' : 'index.html',
 				},
 				output: {
 					entryFileNames: '[name].js',

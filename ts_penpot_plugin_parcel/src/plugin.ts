@@ -5,10 +5,14 @@ import { version as pkgVersion } from '../package.json'
 
 console.log(penpot) // 為了能線上測試用
 
-penpot.ui.open(`${manifestName} v${pkgVersion}`, `${VITE_BASE}index.html?pp_theme=${penpot.theme}`, {
-	width: 375,
-	height: 500,
-})
+penpot.ui.open(
+	`${manifestName} v${pkgVersion}`,
+	`${VITE_BASE}index${VITE_IS_LOCAL ? '_local' : ''}.html?pp_theme=${penpot.theme}`,
+	{
+		width: 375,
+		height: 500,
+	},
+)
 
 const globalState = {
 	groupLibComponents: [] as PluginGroupLibComponent[],
