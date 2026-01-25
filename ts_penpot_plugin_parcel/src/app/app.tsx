@@ -87,7 +87,7 @@ export function App() {
 		<>
 			{tabList.length ? (
 				<>
-					<div className="flex items-center bg-muted rounded-lg px-1 py-0.5 my-1">
+					<div className="sticky top-0 left-0 z-10 w-full flex items-center bg-muted rounded-lg px-1 py-0.5 mb-1">
 						<Tabs value={tabList[deptCurrent].key} onValueChange={handleChangeDeptTab}>
 							<TabsList>
 								{tabList.map(e => {
