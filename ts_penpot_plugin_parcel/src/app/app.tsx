@@ -1,53 +1,127 @@
 import { App as CopyColorApp } from '@/app/app-copy-color.tsx'
 import { App as ResourcesDownloaderApp } from '@/app/app-resources-downloader.tsx'
 import { Tabs, TabsList, TabsTrigger } from '@/shadcn/official/component-ui/tabs.tsx'
-import { useState } from 'react'
+import { type FC, Fragment, useMemo, useState } from 'react'
 import { MdComputer } from 'react-icons/md'
 import { Toaster } from '@/shadcn-official/component-ui/sonner.tsx'
+import { MdDesignServices } from 'react-icons/md'
 
-const DEPT_NAME = {
-	develop: '開發',
+type DeptTab = {
+	key: string
+	name: string
+	Icon: FC
+	children: AppTab[]
 }
 
-const APP_NAME = {
-	develop: {
-		copyColor: '顏色複製',
-		resourcesDownloader: '資源下載',
+type AppTab = {
+	key: string
+	name: string
+	experimental?: boolean
+}
+
+let tabList: DeptTab[] = [
+	{
+		key: 'ui',
+		name: '設計',
+		Icon: MdDesignServices,
+		children: [
+			{
+				key: 'colorManager',
+				name: '顏色管理',
+				experimental: true,
+			},
+		],
 	},
-}
+	{
+		key: 'dev',
+		name: '開發',
+		Icon: MdComputer,
+		children: [
+			{
+				key: 'copyColor',
+				name: '顏色複製',
+			},
+			{
+				key: 'resourcesDownloader',
+				name: '資源下載',
+				experimental: true,
+			},
+		],
+	},
+]
+
+tabList = tabList.reduce((acc, e) => {
+	e.children = e.children.filter(f => !f.experimental)
+	if (e.children.length) acc.push(e)
+	return acc
+}, [])
 
 export function App() {
-	const [deptTab, setDeptTab] = useState(DEPT_NAME.develop)
-	const [appTab, setAppTab] = useState(APP_NAME.develop.copyColor)
+	const [deptCurrent, setDeptCurrent] = useState(0)
+	const [appCurrent, setAppCurrent] = useState(0)
+	const view = useMemo(() => {
+		const deptKey = tabList[deptCurrent].key
+		const appKey = tabList[deptCurrent].children[appCurrent].key
+
+		if (deptKey === 'ui') {
+			if (appKey === 'colorManager') return null
+		}
+
+		if (deptKey === 'dev') {
+			if (appKey === 'copyColor') return <CopyColorApp />
+			if (appKey === 'resourcesDownloader') return <ResourcesDownloaderApp />
+		}
+
+		return null
+	}, [deptCurrent, appCurrent])
+
+	function handleChangeDeptTab(tab: string) {
+		setDeptCurrent(tabList.findIndex(e => e.key === tab))
+		setAppCurrent(0)
+	}
+
+	function handleChangeAppTab(tab: string) {
+		setAppCurrent(tabList[deptCurrent].children.findIndex(e => e.key === tab))
+	}
 
 	return (
 		<>
-			<div className="flex items-center bg-muted rounded-lg px-1 py-0.5 my-1">
-				<Tabs defaultValue={deptTab} onValueChange={setDeptTab}>
-					<TabsList>
-						<TabsTrigger value={DEPT_NAME.develop}>
-							<MdComputer />
-						</TabsTrigger>
-					</TabsList>
-				</Tabs>
-				<Tabs defaultValue={appTab} onValueChange={setAppTab}>
-					<TabsList>
-						<TabsTrigger value={APP_NAME.develop.copyColor}>
-							{APP_NAME.develop.copyColor}
-						</TabsTrigger>
-						<TabsTrigger value={APP_NAME.develop.resourcesDownloader}>
-							{APP_NAME.develop.resourcesDownloader}
-						</TabsTrigger>
-					</TabsList>
-				</Tabs>
-			</div>
-			{deptTab === DEPT_NAME.develop ? (
-				appTab === APP_NAME.develop.copyColor ? (
-					<CopyColorApp />
-				) : appTab === APP_NAME.develop.resourcesDownloader ? (
-					<ResourcesDownloaderApp />
-				) : null
-			) : null}
+			{tabList.length ? (
+				<>
+					<div className="flex items-center bg-muted rounded-lg px-1 py-0.5 my-1">
+						<Tabs value={tabList[deptCurrent].key} onValueChange={handleChangeDeptTab}>
+							<TabsList>
+								{tabList.map(e => {
+									return (
+										<TabsTrigger key={e.key} value={e.key}>
+											<e.Icon />
+										</TabsTrigger>
+									)
+								})}
+							</TabsList>
+						</Tabs>
+
+						<Tabs
+							value={tabList[deptCurrent].children[appCurrent].key}
+							onValueChange={handleChangeAppTab}
+						>
+							<TabsList>
+								{tabList[deptCurrent].children.map(e => {
+									return (
+										<TabsTrigger key={e.key} value={e.key}>
+											{e.name}
+										</TabsTrigger>
+									)
+								})}
+							</TabsList>
+						</Tabs>
+					</div>
+
+					{view}
+				</>
+			) : (
+				'暫無應用'
+			)}
 			<Toaster richColors />
 		</>
 	)
