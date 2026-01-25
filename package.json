@@ -24,6 +24,6 @@
 		"oxlint": "^1.39.0"
 	},
 	"lint-staged": {
-		"*": "oxfmt --no-error-on-unmatched-pattern"
+		"*.{js,jsx,ts,tsx,css}": "oxfmt --no-error-on-unmatched-pattern"
 	}
 }
