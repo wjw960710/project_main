@@ -1,5 +1,6 @@
-import { App as CopyColorApp } from '@/app/copy-color.tsx'
-import { App as ResourcesDownloaderApp } from '@/app/resources-downloader.tsx'
+import { App as CopyColorApp } from '@/app/dev-copy-color.tsx'
+import { App as ResourcesDownloaderApp } from '@/app/dev-resources-downloader.tsx'
+import { App as UIColourManager } from '@/app/ui-color-manager.tsx'
 import { Tabs, TabsList, TabsTrigger } from '@/shadcn/official/component-ui/tabs.tsx'
 import { type FC, useMemo, useState } from 'react'
 import { MdComputer, MdDesignServices } from 'react-icons/md'
@@ -63,7 +64,7 @@ export function App() {
 		const appKey = tabList[deptCurrent].children[appCurrent].key
 
 		if (deptKey === 'ui') {
-			if (appKey === 'colorManager') return null
+			if (appKey === 'colorManager') return <UIColourManager />
 		}
 
 		if (deptKey === 'dev') {
