@@ -21,18 +21,6 @@ type AppTab = {
 
 let tabList: DeptTab[] = [
 	{
-		key: 'ui',
-		name: '設計',
-		Icon: MdDesignServices,
-		children: [
-			{
-				key: 'colorManager',
-				name: '顏色管理',
-				experimental: true,
-			},
-		],
-	},
-	{
 		key: 'dev',
 		name: '開發',
 		Icon: MdComputer,
@@ -45,6 +33,18 @@ let tabList: DeptTab[] = [
 				key: 'resourcesDownloader',
 				name: '資源下載',
 				experimental: true,
+			},
+		],
+	},
+	{
+		key: 'ui',
+		name: '設計',
+		Icon: MdDesignServices,
+		children: [
+			{
+				key: 'colorManager',
+				name: '顏色管理',
+				// experimental: true,
 			},
 		],
 	},

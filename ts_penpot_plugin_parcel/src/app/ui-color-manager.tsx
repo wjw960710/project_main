@@ -163,7 +163,9 @@ export function App() {
 		}
 	}
 
-	function handleColorClick() {}
+	function handleColorClick(color: LibraryColor) {
+		snedMessage('REPLACE_COLOR', color)
+	}
 
 	return (
 		<div className="min-h-screen min-w-full text-[0.75rem] text-black dark:text-white">
@@ -229,7 +231,7 @@ export function App() {
 								<CollapsibleContent
 									key={color.id}
 									className="cursor-pointer my-2 pl-4 flex items-center"
-									onClick={handleColorClick}
+									onClick={() => handleColorClick(color)}
 								>
 									<ColorIcon color={color} />
 									<HighlightedText text={color.name} highlights={dataBySearch.highlights} />
