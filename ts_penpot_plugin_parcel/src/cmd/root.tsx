@@ -1,5 +1,5 @@
-import '@/side-effect/app.ts'
+import '@/side-effect/app'
 import ReactDOM from 'react-dom/client'
-import { App } from '@/app/app.tsx'
+import { App } from '@/app/app'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(<App />)
