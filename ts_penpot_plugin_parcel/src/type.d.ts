@@ -35,6 +35,8 @@ type PluginGroupLibComponent = GroupLibComponent<
 	import('@penpot/plugin-types').LibraryComponent
 >
 
+type PenpotReplaceShapeColorLocation = 'fill' | 'stroke'
+
 // prettier-ignore
 type PenpotMessage<T extends MessageType> =
 	T extends 'EXPORT'
@@ -45,7 +47,10 @@ type PenpotMessage<T extends MessageType> =
 	: T extends 'REPLACE_COLOR'
 		? {
 			type: T
-			data: import('@penpot/plugin-types').LibraryColor
+			data: {
+				color: import('@penpot/plugin-types').LibraryColor
+				location: PenpotReplaceShapeColorLocation
+			}
 		}
 		: { type: T; data: undefined }
 

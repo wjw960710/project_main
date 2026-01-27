@@ -1,5 +1,5 @@
 import { MAP_LIB_GROUP_NAME, MAP_NAME } from '@/constant/color-copy.ts'
-import type { Fill, LibraryColor, Shape } from '@penpot/plugin-types'
+import type { Fill, LibraryColor, Shape, Stroke } from '@penpot/plugin-types'
 import { name as manifestName } from '../public/manifest.json'
 import { version as pkgVersion } from '../package.json'
 
@@ -81,7 +81,7 @@ penpot.ui.onMessage(async (message: PenpotMessage<MessageType>) => {
 
 		sendMessage(msg.type, res)
 	} else if (msg.type === 'REPLACE_COLOR') {
-		recursiveChangeColor(msg.data, penpot.selection)
+		recursiveChangeColor(msg.data.color, msg.data.location, penpot.selection)
 	}
 })
 
@@ -126,7 +126,11 @@ export async function processInChunks<T, R>(
 	}
 }
 
-function recursiveChangeColor(color: LibraryColor, shapes: Shape[]) {
+function recursiveChangeColor(
+	color: LibraryColor,
+	location: PenpotReplaceShapeColorLocation,
+	shapes: Shape[],
+) {
 	// 官方提供的類型與實際的不同= =
 	const _color = color as LibraryColor & { fileId: string }
 
@@ -137,24 +141,62 @@ function recursiveChangeColor(color: LibraryColor, shapes: Shape[]) {
 			penpot.utils.types.isBool(shape) ||
 			penpot.utils.types.isMask(shape)
 		) {
-			recursiveChangeColor(_color, shape.children)
+			recursiveChangeColor(_color, location, shape.children)
 		} else if (
 			penpot.utils.types.isRectangle(shape) ||
 			penpot.utils.types.isEllipse(shape) ||
 			penpot.utils.types.isText(shape)
 		) {
-			const fill: Fill = {
-				fillColorRefId: _color.id,
-				fillColorRefFile: _color.fileId,
-			}
-			if (_color.color) {
-				fill.fillColor = _color.color
-				fill.fillOpacity = _color.opacity || 1
-			} else if (_color.gradient?.stops.length) {
-				fill.fillColorGradient = _color.gradient
-			}
+			if (location === 'fill') {
+				const fill: Fill = {
+					fillColorRefId: _color.id,
+					fillColorRefFile: _color.fileId,
+				}
 
-			shape.fills = [fill]
+				if (_color.color) {
+					fill.fillColor = _color.color
+					fill.fillOpacity = _color.opacity
+				} else if (_color.gradient?.stops.length) {
+					fill.fillColorGradient = _color.gradient
+				}
+
+				shape.fills = [fill]
+			} else if (location === 'stroke') {
+				const stroke: Stroke = {
+					strokeColorRefId: _color.id,
+					strokeColorRefFile: _color.fileId,
+				}
+
+				if (_color.color) {
+					stroke.strokeColor = _color.color
+					stroke.strokeOpacity = _color.opacity
+				} else if (_color.gradient?.stops.length) {
+					stroke.strokeColorGradient = _color.gradient
+				}
+
+				const originStroke = shape.strokes[0]
+				if (originStroke) {
+					if (originStroke.strokeStyle) {
+						stroke.strokeStyle = originStroke.strokeStyle
+					} else {
+						stroke.strokeStyle = 'solid'
+					}
+
+					if (originStroke.strokeWidth) {
+						stroke.strokeWidth = originStroke.strokeWidth
+					} else {
+						stroke.strokeWidth = 1
+					}
+
+					if (originStroke.strokeAlignment) {
+						stroke.strokeAlignment = originStroke.strokeAlignment
+					} else {
+						stroke.strokeAlignment = 'inner'
+					}
+				}
+
+				shape.strokes = [stroke]
+			}
 		}
 	})
 }

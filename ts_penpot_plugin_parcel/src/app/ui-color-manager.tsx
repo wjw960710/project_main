@@ -1,4 +1,12 @@
-import { type ChangeEvent, Fragment, type ReactNode, useEffect, useMemo, useState } from 'react'
+import {
+	type ChangeEvent,
+	type MouseEvent,
+	Fragment,
+	type ReactNode,
+	useEffect,
+	useMemo,
+	useState,
+} from 'react'
 import type { LibraryColor } from '@penpot/plugin-types'
 import { snedMessage } from '@/util/action-ui.ts'
 import { debounce } from 'radash'
@@ -163,8 +171,12 @@ export function App() {
 		}
 	}
 
-	function handleColorClick(color: LibraryColor) {
-		snedMessage('REPLACE_COLOR', color)
+	function handleColorClick(ev: MouseEvent<HTMLDivElement>, color: LibraryColor) {
+		const location: PenpotReplaceShapeColorLocation = ev.altKey ? 'stroke' : 'fill'
+		snedMessage('REPLACE_COLOR', {
+			color,
+			location,
+		})
 	}
 
 	return (
@@ -231,7 +243,7 @@ export function App() {
 								<CollapsibleContent
 									key={color.id}
 									className="cursor-pointer my-2 pl-4 flex items-center"
-									onClick={() => handleColorClick(color)}
+									onClick={ev => handleColorClick(ev, color)}
 								>
 									<ColorIcon color={color} />
 									<HighlightedText text={color.name} highlights={dataBySearch.highlights} />
