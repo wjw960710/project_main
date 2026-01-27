@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { build as esbuild } from 'esbuild'
 import path from 'node:path'
-import { omit, parallel, shake } from 'radash'
+import { omit, shake } from 'radash'
 import manifest from './public/manifest.json'
 import fs from 'node:fs'
 import https from 'node:https'
@@ -32,6 +32,12 @@ const customExecSymbol = process.argv.indexOf('--')
 const cliOptions = (
 	customExecSymbol > -1 ? omit(minimist(process.argv.slice(customExecSymbol + 1)), ['_']) : {}
 ) as CliOptions
+
+const agent = new https.Agent({
+	rejectUnauthorized: false,
+})
+
+const UPLOAD_BATCH = 10
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
@@ -191,50 +197,59 @@ function postProcessPlugin({
 			`${env.SERVER_NEXUS_USERNAME}:${env.SERVER_NEXUS_PASSWORD}`,
 		).toString('base64')
 
-		const formData = new FormData()
-		formData.append('raw.directory', env.SERVER_NEXUS_DIRECTORY)
+		await batchProcess(
+			UPLOAD_BATCH,
+			entries,
+			async entry => {
+				return {
+					filename: getFilename(entry),
+					entry,
+					buffer: await fs.promises.readFile(path.join(distPath, entry)),
+				}
+			},
+			async (fileList, batchIndex) => {
+				console.log(fillLine('='))
+				console.log(`開始第 ${batchIndex + 1} 輪資源上傳到 Nexus\n`)
 
-		const fileList = await parallel(5, entries, async entry => {
-			return {
-				filename: getFilename(entry),
-				entry,
-				buffer: await fs.promises.readFile(path.join(distPath, entry)),
-			}
-		})
+				const formData = new FormData()
+				formData.append('raw.directory', env.SERVER_NEXUS_DIRECTORY)
 
-		fileList.forEach((e, i) => {
-			const n = i + 1
-			formData.append(`raw.asset${n}`, new Blob([e.buffer]), e.filename)
-			formData.append(`raw.asset${n}.filename`, e.entry)
-		})
+				fileList.forEach((e, i) => {
+					const n = i + 1
+					formData.append(`raw.asset${n}`, new Blob([e.buffer]), e.filename)
+					formData.append(`raw.asset${n}.filename`, e.entry)
+				})
 
-		try {
-			const agent = new https.Agent({
-				rejectUnauthorized: false,
-			})
-			const response = await fetch(url, {
-				method: 'POST',
-				headers: {
-					Authorization: `Basic ${credentials}`,
-				},
-				body: formData,
-				agent,
-			})
+				try {
+					const response = await fetch(url, {
+						method: 'POST',
+						headers: {
+							Authorization: `Basic ${credentials}`,
+						},
+						body: formData,
+						agent,
+					})
 
-			// 讀取錯誤響應內容
-			const responseText = await response.text()
+					// 讀取錯誤響應內容
+					const responseText = await response.text()
 
-			if (!response.ok) {
-				throw new Error(
-					`❌ 上傳失敗: ${response.status} ${response.statusText}\n${responseText}`,
-				)
-			}
+					if (!response.ok) {
+						throw new Error(
+							`❌ 上傳失敗: ${response.status} ${response.statusText}\n${responseText}`,
+						)
+					}
 
-			console.log(`✅ 成功上傳到 Nexus`)
-			return response
-		} catch (error) {
-			console.error('❌ Nexus 上傳失敗:', error)
-		}
+					fileList.forEach((e, i) => {
+						console.log(`  ${i + 1}. ${e.entry}`)
+					})
+					console.log(`\n✅ 第 ${batchIndex + 1} 輪資源已成功上傳到 Nexus`)
+				} catch (error) {
+					console.error('❌ 第 ${batchIndex + 1} 輪 Nexus 上傳失敗:', error)
+				} finally {
+					console.log(fillLine('='))
+				}
+			},
+		)
 	}
 
 	return {
@@ -278,4 +293,30 @@ function myPreviewServerPlugin({ outDir }: { outDir: string }): Plugin {
 			})
 		},
 	}
+}
+
+async function batchProcess<T, R>(
+	limit: number,
+	items: T[],
+	processor: (item: T) => Promise<R>,
+	onBatchComplete: (results: R[], batchIndex: number) => Promise<void> | void,
+): Promise<R[]> {
+	const allResults: R[] = []
+
+	for (let i = 0; i < items.length; i += limit) {
+		const batch = items.slice(i, i + limit)
+		const batchIndex = Math.floor(i / limit)
+
+		// 處理當前批次
+		const batchResults = await Promise.all(batch.map(item => processor(item)))
+
+		// 執行批次完成回調
+		const batchCompleteProcessor = onBatchComplete(batchResults, batchIndex)
+		if (batchCompleteProcessor instanceof Promise) await batchCompleteProcessor
+
+		// 收集所有結果
+		allResults.push(...batchResults)
+	}
+
+	return allResults
 }
