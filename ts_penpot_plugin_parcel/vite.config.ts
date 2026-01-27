@@ -209,7 +209,9 @@ function postProcessPlugin({
 			},
 			async (fileList, batchIndex) => {
 				console.log(fillLine('='))
-				console.log(`開始第 ${batchIndex + 1} 輪資源上傳到 Nexus\n`)
+				console.log(
+					`開始第 ${batchIndex + 1} 輪資源上傳到 Nexus，一次性上傳資源上限為 ${UPLOAD_BATCH}\n`,
+				)
 
 				const formData = new FormData()
 				formData.append('raw.directory', env.SERVER_NEXUS_DIRECTORY)
