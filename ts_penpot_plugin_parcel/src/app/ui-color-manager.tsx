@@ -308,7 +308,7 @@ function ColorIcon({ color }: { color: LibraryColor }) {
 	return (
 		<div
 			className={
-				'relative inline-flex rounded-[100px] overflow-hidden w-4 h-4 mr-2 border-solid border border-neutral-50 dark:border-neutral-700'
+				'relative inline-flex rounded-[100px] overflow-hidden w-4 h-4 mr-2 border-solid border border-neutral-400 dark:border-neutral-700'
 			}
 		>
 			{rgbaList.map((rgba, i) => {

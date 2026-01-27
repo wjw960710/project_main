@@ -10,7 +10,7 @@ penpot.ui.open(
 	`${VITE_BASE}index${VITE_IS_LOCAL ? '_local' : ''}.html?pp_theme=${penpot.theme}`,
 	{
 		width: 375,
-		height: 500,
+		height: penpot.viewport.bounds.height,
 	},
 )
 
