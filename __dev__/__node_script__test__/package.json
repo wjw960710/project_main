@@ -8,10 +8,13 @@
 	"type": "module",
 	"main": "index.js",
 	"scripts": {
+		"run:script_test": "tsx src/main.ts",
 		"watch:script_test": "tsx watch src/main.ts"
 	},
 	"dependencies": {
-		"node-fetch": "^3.3.2"
+		"@types/ssh2": "^1.15.5",
+		"node-fetch": "^3.3.2",
+		"ssh2": "^1.17.0"
 	},
 	"devDependencies": {
 		"@types/node": "^25.0.10",
