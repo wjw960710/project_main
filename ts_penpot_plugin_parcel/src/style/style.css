@@ -1,1 +1,21 @@
 @import "@/style/tailwind.css";
+
+*::-webkit-scrollbar-track
+{
+  -webkit-box-shadow: none;
+  border-radius: 0;
+  @apply bg-gray-50;
+}
+
+*::-webkit-scrollbar
+{
+  width: 4px;
+  @apply bg-gray-50;
+}
+
+*::-webkit-scrollbar-thumb
+{
+  border-radius: 0;
+  -webkit-box-shadow: none;
+  @apply bg-gray-300;
+}

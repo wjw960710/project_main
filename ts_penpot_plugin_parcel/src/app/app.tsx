@@ -1,5 +1,6 @@
-import { App as CopyColorApp } from '@/app/app-copy-color.tsx'
-import { App as ResourcesDownloaderApp } from '@/app/app-resources-downloader.tsx'
+import { App as CopyColorApp } from '@/app/dev-copy-color.tsx'
+import { App as ResourcesDownloaderApp } from '@/app/dev-resources-downloader.tsx'
+import { App as UIColourManager } from '@/app/ui-color-manager.tsx'
 import { Tabs, TabsList, TabsTrigger } from '@/shadcn/official/component-ui/tabs.tsx'
 import { type FC, useMemo, useState } from 'react'
 import { MdComputer, MdDesignServices } from 'react-icons/md'
@@ -20,18 +21,6 @@ type AppTab = {
 
 let tabList: DeptTab[] = [
 	{
-		key: 'ui',
-		name: '設計',
-		Icon: MdDesignServices,
-		children: [
-			{
-				key: 'colorManager',
-				name: '顏色管理',
-				experimental: true,
-			},
-		],
-	},
-	{
 		key: 'dev',
 		name: '開發',
 		Icon: MdComputer,
@@ -44,6 +33,18 @@ let tabList: DeptTab[] = [
 				key: 'resourcesDownloader',
 				name: '資源下載',
 				experimental: true,
+			},
+		],
+	},
+	{
+		key: 'ui',
+		name: '設計',
+		Icon: MdDesignServices,
+		children: [
+			{
+				key: 'colorManager',
+				name: '顏色管理',
+				// experimental: true,
 			},
 		],
 	},
@@ -63,7 +64,7 @@ export function App() {
 		const appKey = tabList[deptCurrent].children[appCurrent].key
 
 		if (deptKey === 'ui') {
-			if (appKey === 'colorManager') return null
+			if (appKey === 'colorManager') return <UIColourManager />
 		}
 
 		if (deptKey === 'dev') {
