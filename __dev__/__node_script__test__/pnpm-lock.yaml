@@ -8,12 +8,15 @@ importers:
 
   .:
     dependencies:
-      '@types/ssh2':
-        specifier: ^1.15.5
-        version: 1.15.5
       cac:
         specifier: ^6.7.14
         version: 6.7.14
+      dotenv:
+        specifier: ^17.2.3
+        version: 17.2.3
+      js-yaml:
+        specifier: ^4.1.1
+        version: 4.1.1
       node-fetch:
         specifier: ^3.3.2
         version: 3.3.2
@@ -23,13 +26,22 @@ importers:
       radash:
         specifier: ^12.1.1
         version: 12.1.1
-    devDependencies:
-      '@types/node':
-        specifier: ^25.0.10
-        version: 25.0.10
       tsx:
         specifier: ^4.21.0
         version: 4.21.0
+    devDependencies:
+      '@types/js-yaml':
+        specifier: ^4.0.9
+        version: 4.0.9
+      '@types/node':
+        specifier: ^25.0.10
+        version: 25.0.10
+      '@types/ssh2':
+        specifier: ^1.15.5
+        version: 1.15.5
+      esbuild:
+        specifier: ^0.27.2
+        version: 0.27.2
 
 packages:
 
@@ -189,6 +201,9 @@ packages:
     cpu: [x64]
     os: [win32]
 
+  '@types/js-yaml@4.0.9':
+    resolution: {integrity: sha512-k4MGaQl5TGo/iipqb2UDG2UwjXziSWkh0uysQelTlJpX1qGlpUZYm8PnO4DxG1qBomtJUdYJ6qR6xdIah10JLg==}
+
   '@types/node@18.19.130':
     resolution: {integrity: sha512-GRaXQx6jGfL8sKfaIDD6OupbIHBr9jv7Jnaml9tB7l4v068PAOXqfcujMMo5PhbIs6ggR1XODELqahT2R8v0fg==}
 
@@ -197,6 +212,9 @@ packages:
 
   '@types/ssh2@1.15.5':
     resolution: {integrity: sha512-N1ASjp/nXH3ovBHddRJpli4ozpk6UdDYIX4RJWFa9L1YKnzdhTlVmiGHm4DZnj/jLbqZpes4aeR30EFGQtvhQQ==}
+
+  argparse@2.0.1:
+    resolution: {integrity: sha512-8+9WqebbFzpX9OR+Wa6O29asIogeRMzcGtAINdpMHHyAg10f05aSFVBbcEqGf/PXw1EjAZ+q2/bEBg3DvurK3Q==}
 
   asn1@0.2.6:
     resolution: {integrity: sha512-ix/FxPn0MDjeyJ7i/yoHGFt/EX6LyNbxSEhPPXODPL+KB0VPk86UYfL0lMdy+KCnv+fmvIzySwaK5COwqVbWTQ==}
@@ -219,6 +237,10 @@ packages:
   data-uri-to-buffer@4.0.1:
     resolution: {integrity: sha512-0R9ikRb668HB7QDxT1vkpuUBtqc53YyAwMwGeUFKRojY/NWKvdZ+9UYtRfGmhqNbRkTSVpMbmyhXipFFv2cb/A==}
     engines: {node: '>= 12'}
+
+  dotenv@17.2.3:
+    resolution: {integrity: sha512-JVUnt+DUIzu87TABbhPmNfVdBDt18BLOWjMUFJMSi/Qqg7NTYtabbvSNJGOJ7afbRuv9D/lngizHtP7QyLQ+9w==}
+    engines: {node: '>=12'}
 
   esbuild@0.27.2:
     resolution: {integrity: sha512-HyNQImnsOC7X9PMNaCIeAm4ISCQXs5a5YasTXVliKv4uuBo1dKrG0A+uQS8M5eXjVMnLg3WgXaKvprHlFJQffw==}
@@ -244,6 +266,10 @@ packages:
   is-stream@2.0.1:
     resolution: {integrity: sha512-hFoiJiTl63nn+kstHGBtewWSKnQLpyb155KHheA1l39uvtO9nWIop1p3udqPcUd/xbF1VLMO4n7OI6p7RbngDg==}
     engines: {node: '>=8'}
+
+  js-yaml@4.1.1:
+    resolution: {integrity: sha512-qQKT4zQxXl8lLwBtHMWwaTcGfFOZviOJet3Oy/xmGk2gZH677CJM9EvtfdSkgWcATZhj/55JZ0rmy3myCT5lsA==}
+    hasBin: true
 
   make-dir@3.1.0:
     resolution: {integrity: sha512-g3FeP20LNwhALb/6Cz6Dd4F2ngze0jz7tbzrD2wAV+o9FeNHe4rL+yK2md0J/fiSf1sa1ADhXqi5+oVwOM/eGw==}
@@ -392,6 +418,8 @@ snapshots:
   '@esbuild/win32-x64@0.27.2':
     optional: true
 
+  '@types/js-yaml@4.0.9': {}
+
   '@types/node@18.19.130':
     dependencies:
       undici-types: 5.26.5
@@ -403,6 +431,8 @@ snapshots:
   '@types/ssh2@1.15.5':
     dependencies:
       '@types/node': 18.19.130
+
+  argparse@2.0.1: {}
 
   asn1@0.2.6:
     dependencies:
@@ -424,6 +454,8 @@ snapshots:
     optional: true
 
   data-uri-to-buffer@4.0.1: {}
+
+  dotenv@17.2.3: {}
 
   esbuild@0.27.2:
     optionalDependencies:
@@ -471,6 +503,10 @@ snapshots:
       resolve-pkg-maps: 1.0.0
 
   is-stream@2.0.1: {}
+
+  js-yaml@4.1.1:
+    dependencies:
+      argparse: 2.0.1
 
   make-dir@3.1.0:
     dependencies:
