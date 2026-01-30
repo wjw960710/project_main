@@ -1,8 +1,6 @@
-import path from 'node:path'
-import SSH2Promise from 'ssh2-promise'
+import { NodeSSH } from 'node-ssh'
 import { pick } from 'radash'
 import { bootstrapCac } from '../build-recipe/cac'
-import SFTP from 'ssh2-promise/lib/sftp'
 
 interface SSHConfig {
 	host: string // 替換為你的 IP
@@ -15,10 +13,6 @@ const defaultCliOptions = {
 		desc: '連線 IP',
 		defaultValue: '',
 	},
-	'--port <number>': {
-		desc: '端口',
-		defaultValue: 22,
-	},
 	'--username <string>': {
 		desc: '用戶名',
 		defaultValue: '',
@@ -26,14 +20,6 @@ const defaultCliOptions = {
 	'--password <string>': {
 		desc: '密碼',
 		defaultValue: '',
-	},
-	'--app <string>': {
-		desc: '應用名稱',
-		defaultValue: 'player',
-	},
-	'--mode <string>': {
-		desc: 'vite mode',
-		defaultValue: 'production',
 	},
 } satisfies Record<string, any>
 
@@ -44,47 +30,56 @@ const { options } = bootstrapCac({
 console.log('子指令參數：')
 console.log(JSON.stringify(options, null, 2))
 
-const appInfo = {
-	player: {
-		remoteRoot: '/player-client',
-		projectRoot: 'D:\\player-client',
-	},
-}
-
 // 執行主函數
 main().catch(console.error)
 
 // 建立 SSH 連線
-async function connectSSH(config: SSHConfig): Promise<SSH2Promise> {
-	const conn = new SSH2Promise(config)
-	await conn.connect()
+async function connect(config: SSHConfig) {
+	const conn = new NodeSSH()
+	await conn.connect(config)
 	console.log('✅ SSH 連線成功!')
 	return conn
 }
 
-async function resolveRemotePath(ssh: SSH2Promise, remotePath: string) {
+async function resolveRemotePath(conn: NodeSSH, remotePath: string = '~'): Promise<string> {
 	if (remotePath.startsWith('~')) {
-		const homePath = (await ssh.exec('echo $HOME')).trim()
-		return homePath + remotePath.substring(1)
+		const result = await conn.execCommand('echo $HOME')
+		const homeDir = result.stdout.trim()
+		return homeDir + remotePath.substring(1)
 	}
-
 	return remotePath
 }
 
-async function uploadFile(sftp: SFTP, localPath: string, remotePath: string) {
+async function uploadFile(
+	conn: NodeSSH,
+	localPath: string,
+	remotePath: string,
+): Promise<[string, string]> {
 	const [, filename] = localPath.match(/[/\\]([^/\\]+)$/) || [undefined, 'unknown']
-	const fullRemotePath = remotePath.endsWith('/')
-		? `${remotePath}${filename}`
-		: `${remotePath}/${filename}`
-	await sftp.fastPut(localPath, fullRemotePath)
+
+	// 解析遠端路徑
+	const resolvedRemotePath = await resolveRemotePath(conn, remotePath)
+
+	const fullRemotePath = resolvedRemotePath.endsWith('/')
+		? `${resolvedRemotePath}${filename}`
+		: `${resolvedRemotePath}/${filename}`
+
+	// 執行文件上傳
+	await conn.putFile(localPath, fullRemotePath)
+	console.log(`📁 文件上傳成功: ${filename} -> ${fullRemotePath}`)
+
 	return [filename, fullRemotePath]
 }
 
-async function verifyRemoteFileExists(sftp: SFTP, remotePath: string): Promise<boolean> {
+async function checkFileExists(conn: NodeSSH, remotePath: string): Promise<boolean> {
 	try {
-		await sftp.stat(remotePath)
-		return true
+		const resolvedRemotePath = await resolveRemotePath(conn, remotePath)
+		const result = await conn.execCommand(
+			`test -f "${resolvedRemotePath}" && echo "1" || echo "0"`,
+		)
+		return result.stdout.trim() === '1'
 	} catch (error) {
+		console.error('檢查文件存在時出錯:', error)
 		return false
 	}
 }
@@ -92,40 +87,31 @@ async function verifyRemoteFileExists(sftp: SFTP, remotePath: string): Promise<b
 // 主函數
 async function main() {
 	// SSH 連線設定 - 請替換為你的實際值
-	const sshConfig: SSHConfig = pick(options, ['host', 'port', 'username', 'password'])
+	const sshConfig: SSHConfig = Object.assign(pick(options, ['host', 'username', 'password']), {
+		port: 22,
+	})
 
-	if (!sshConfig.host || !sshConfig.port || !sshConfig.username || !sshConfig.password) {
-		throw new Error('缺少必要的 SSH 連線參數 --host, --port, --username, --password')
+	if (!sshConfig.host || !sshConfig.username || !sshConfig.password) {
+		throw new Error('缺少必要的 SSH 連線參數 --host, --username, --password')
 	}
 
-	let ssh: SSH2Promise | null = null
-	let sftp: SFTP | null = null
-
+	let conn: NodeSSH | null = null
 	try {
-		// 建立 SSH 連線
-		ssh = await connectSSH(sshConfig)
-		sftp = ssh.sftp()
+		// 建立連線
+		conn = await connect(sshConfig)
 
-		// const homePath = await resolveRemotePath(ssh, '~')
-		const [, remoteFilepath] = await uploadFile(
-			sftp,
-			'D:\\player-client\\dist\\dist.zip',
-			'/player-client',
-		)
-		console.log('✅ 檔案上傳成功!')
+		// 示例使用
+		const exists = await checkFileExists(conn, '~/test.txt')
+		console.log('文件存在:', exists)
 
-		// 驗證上傳的檔案是否存在
-		const exists = await verifyRemoteFileExists(sftp, remoteFilepath)
-		if (exists) {
-			await ssh.exec('sudo unzip -o /player-client/dist.zip -d /player-client/')
-			console.log('✅ 檔案解壓縮成功!')
-		}
+		// 記得在完成後關閉連線
+		conn.dispose()
+		console.log('🔒 SSH 連線已關閉')
 	} catch (error) {
-		console.error('❌ 執行過程中發生錯誤:', error)
-	} finally {
-		if (ssh) {
-			await ssh.close()
-			console.log('✅ SSH 已關閉連線!')
+		console.error('❌ SSH 操作失敗:', error)
+		if (conn) {
+			conn.dispose()
 		}
+		throw error
 	}
 }
