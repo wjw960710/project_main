@@ -37,3 +37,14 @@ export function groupByToMap<T, K>(items: T[], keySelector: (item: T) => K): Map
 
 	return map
 }
+
+export function objMap<T extends Record<string | number | symbol, any>, R>(
+	obj: T,
+	mapper: (key: keyof T, value: T[keyof T]) => R,
+): R[] {
+	const result: R[] = []
+	for (const key in obj) {
+		result.push(mapper(key as keyof T, obj[key]))
+	}
+	return result
+}

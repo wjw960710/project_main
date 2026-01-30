@@ -3,6 +3,7 @@ type MessageType =
 	| 'GET_CONNECTED_COLORS' // 取得該檔按所有關聯的顏色資源
 	| 'GET_GROUP_LIB_COMPONENTS' // 取得元件列表
 	| 'EXPORT' // 取得導出數據
+	| 'REPLACE_COLOR' // 替換形狀顏色
 
 type UiLibComp = Pick<
 	import('@penpot/plugin-types').LibraryComponent,
@@ -34,12 +35,22 @@ type PluginGroupLibComponent = GroupLibComponent<
 	import('@penpot/plugin-types').LibraryComponent
 >
 
+type PenpotReplaceShapeColorLocation = 'fill' | 'stroke'
+
 // prettier-ignore
 type PenpotMessage<T extends MessageType> =
 	T extends 'EXPORT'
 		? {
 			type: T
 			data: PenpotMsgExportData | PenpotMsgExportData[]
+		}
+	: T extends 'REPLACE_COLOR'
+		? {
+			type: T
+			data: {
+				color: import('@penpot/plugin-types').LibraryColor
+				location: PenpotReplaceShapeColorLocation
+			}
 		}
 		: { type: T; data: undefined }
 

@@ -8,13 +8,23 @@
 	"type": "module",
 	"main": "index.js",
 	"scripts": {
-		"watch:script_test": "tsx watch src/main.ts"
+		"watch:script_test": "tsx watch src/main.ts",
+		"run:script_test": "tsx src/main.ts",
+		"build:script_test": "esbuild src/main.ts --bundle --minify --platform=node --external:*.node --format=cjs --outfile=dist/script.cjs"
 	},
 	"dependencies": {
-		"node-fetch": "^3.3.2"
+		"cac": "^6.7.14",
+		"dotenv": "^17.2.3",
+		"js-yaml": "^4.1.1",
+		"node-fetch": "^3.3.2",
+		"node-ssh": "^13.2.1",
+		"radash": "^12.1.1",
+		"tsx": "^4.21.0"
 	},
 	"devDependencies": {
+		"@types/js-yaml": "^4.0.9",
 		"@types/node": "^25.0.10",
-		"tsx": "^4.21.0"
+		"@types/ssh2": "^1.15.5",
+		"esbuild": "^0.27.2"
 	}
 }
