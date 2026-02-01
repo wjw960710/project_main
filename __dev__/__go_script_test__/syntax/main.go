@@ -49,12 +49,12 @@ func main() {
 	generic()
 	fmt.Println("\n=== ↑ generic()  ↓ amodule() ===\n")
 	amodule()
-	fmt.Println("\n=== ↑ amodule()  ↓ gorountine() ===\n")
-	gorountine()
-	fmt.Println("\n=== ↑ gorountine() ===")
+	fmt.Println("\n=== ↑ amodule()  ↓ goroutine() ===\n")
+	goroutine()
+	fmt.Println("\n=== ↑ goroutine() ===")
 }
 
-func gorountine() {
+func goroutine() {
 
 }
 
