@@ -38,6 +38,10 @@ const defaultCliOptions = {
 		desc: '應用名稱',
 		defaultValue: '',
 	},
+	'--skip_build <boolean>': {
+		desc: '是否要略過打包',
+		defaultValue: false,
+	},
 } satisfies Record<string, any>
 
 const { options } = bootstrapCac({
@@ -104,9 +108,11 @@ async function main() {
 		port: 22,
 	}
 
-	console.log('開始運行打包指令 ...')
-	await runCommand(env.app.build_exec, env.app.project_dir)
-	console.log('✅ 已完成運行打包指令')
+	if (!options.skip_build) {
+		console.log('開始運行打包指令 ...')
+		await runCommand(env.app.build_exec, env.app.project_dir)
+		console.log('✅ 已完成運行打包指令')
+	}
 
 	let conn: NodeSSH | null = null
 	try {
