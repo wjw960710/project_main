@@ -45,10 +45,12 @@ func main() {
 	var configPath string
 	var envName string
 	var appName string
+	var skipBuild bool
 
 	flag.StringVar(&configPath, "config", "", "config 檔路徑")
 	flag.StringVar(&envName, "env", "", "執行環境")
 	flag.StringVar(&appName, "app", "", "應用名稱")
+	flag.BoolVar(&skipBuild, "skip_build", false, "略過打包")
 	flag.Parse()
 
 	fmt.Println("子指令參數：")
@@ -72,11 +74,13 @@ func main() {
 		fatalf("缺少打包/上傳必要的參數 ssh_static, app.ssh_name, app.project_dir, app.upload_file, app.build_exec")
 	}
 
-	fmt.Println("開始運行打包指令 ...")
-	if err := runLocalCommand(env.App.BuildExec, env.App.ProjectDir); err != nil {
-		fatalErr(err)
+	if !skipBuild {
+		fmt.Println("開始運行打包指令 ...")
+		if err := runLocalCommand(env.App.BuildExec, env.App.ProjectDir); err != nil {
+			fatalErr(err)
+		}
+		fmt.Println("✅ 已完成運行打包指令")
 	}
-	fmt.Println("✅ 已完成運行打包指令")
 
 	sshClient, err := connectSSH(env.SSHHost, env.SSHUsername, env.SSHPassword, 22)
 	if err != nil {
