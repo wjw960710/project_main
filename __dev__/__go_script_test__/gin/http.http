@@ -1,0 +1,10 @@
+###
+GET http://localhost:8080/ping
+
+###
+POST http://localhost:8080/user
+Content-Type: application/json
+
+{
+  "name": "frank"
+}
