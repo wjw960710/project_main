@@ -45,39 +45,59 @@ func main() {
 	var configPath string
 	var envName string
 	var appName string
+	var branchName string
 	var skipBuild bool
 
 	flag.StringVar(&configPath, "config", "", "config 檔路徑")
 	flag.StringVar(&envName, "env", "", "執行環境")
 	flag.StringVar(&appName, "app", "", "應用名稱")
+	flag.StringVar(&branchName, "branch", "", "分支名稱")
 	flag.BoolVar(&skipBuild, "skip_build", false, "略過打包")
 	flag.Parse()
 
 	fmt.Println("子指令參數：")
 	fmt.Printf("{\n  \"config\": %q,\n  \"env\": %q,\n  \"app\": %q\n}\n", configPath, envName, appName)
 
-	if configPath == "" || envName == "" || appName == "" {
-		fatalf("缺少必要的配置檔參數 --config, --env, --app")
+	if configPath == "" || envName == "" || appName == "" || branchName == "" {
+		fatalf("缺少必要的配置檔參數 --config, --env, --app, --branch")
+		return
 	}
 
 	env, err := loadAndResolveEnv(configPath, envName, appName)
 	if err != nil {
 		fatalErr(err)
+		return
 	}
 
 	fmt.Printf("env: %+v\n", env)
 
 	if env.SSHHost == "" || env.SSHUsername == "" || env.SSHPassword == "" {
 		fatalf("缺少必要的 SSH 連線參數 ssh_host, ssh_username, ssh_password")
+		return
 	}
 	if env.SSHStatic == "" || env.App.SSHName == "" || env.App.ProjectDir == "" || env.App.UploadFile == "" || env.App.BuildExec == "" {
 		fatalf("缺少打包/上傳必要的參數 ssh_static, app.ssh_name, app.project_dir, app.upload_file, app.build_exec")
+		return
 	}
 
+	buildProjectDir := env.App.ProjectDir
+
 	if !skipBuild {
-		fmt.Println("開始運行打包指令 ...")
-		if err := runLocalCommand(env.App.BuildExec, env.App.ProjectDir); err != nil {
+		tmpRoot, tmpProjectDir, cleanup, err := prepareTempWorkspaceWithGitWorktree(buildProjectDir, branchName)
+		if err != nil {
 			fatalErr(err)
+			return
+		}
+		defer cleanup()
+
+		buildProjectDir = tmpProjectDir
+		fmt.Printf("使用暫存 workspace: %s\n", tmpRoot)
+		fmt.Printf("worktree 位置: %s\n", buildProjectDir)
+
+		fmt.Println("開始運行打包指令 ...")
+		if err := runLocalCommand(env.App.BuildExec, buildProjectDir); err != nil {
+			fatalErr(err)
+			return
 		}
 		fmt.Println("✅ 已完成運行打包指令")
 	}
@@ -85,6 +105,7 @@ func main() {
 	sshClient, err := connectSSH(env.SSHHost, env.SSHUsername, env.SSHPassword, 22)
 	if err != nil {
 		fatalErr(err)
+		return
 	}
 	defer sshClient.Close()
 	fmt.Println("✅ SSH 連線成功!")
@@ -92,18 +113,21 @@ func main() {
 	sftpClient, err := sftp.NewClient(sshClient)
 	if err != nil {
 		fatalErr(fmt.Errorf("建立 SFTP 失敗: %w", err))
+		return
 	}
 	defer sftpClient.Close()
 
 	homePath, err := resolveRemotePath(sshClient, "~")
 	if err != nil {
 		fatalErr(err)
+		return
 	}
 
-	localZipPath := filepath.Join(env.App.ProjectDir, filepath.FromSlash(env.App.UploadFile))
+	localZipPath := filepath.Join(buildProjectDir, filepath.FromSlash(env.App.UploadFile))
 	remoteZipPath, err := uploadFileSFTP(sftpClient, sshClient, localZipPath, homePath)
 	if err != nil {
 		fatalErr(err)
+		return
 	}
 	fmt.Println("✅ 檔案上傳成功!")
 
@@ -113,11 +137,13 @@ func main() {
 	// 注意：sudo 可能需要 TTY/密碼，這裡假設遠端已設定免密 sudo 或允許非互動 sudo。
 	if _, err := execRemote(sshClient, fmt.Sprintf(`sudo unzip -o %q -d %q`, remoteZipPath, remoteAppDir)); err != nil {
 		fatalErr(err)
+		return
 	}
 	fmt.Println("✅ 檔案解壓縮成功!")
 
 	if err := deleteRemoteFile(sshClient, remoteZipPath); err != nil {
 		fatalErr(err)
+		return
 	}
 
 	fmt.Println("🔒 SSH 連線已關閉")
@@ -125,12 +151,10 @@ func main() {
 
 func fatalf(format string, a ...any) {
 	fmt.Fprintf(os.Stderr, "❌ "+format+"\n", a...)
-	os.Exit(1)
 }
 
 func fatalErr(err error) {
 	fmt.Fprintf(os.Stderr, "❌ %v\n", err)
-	os.Exit(1)
 }
 
 func loadAndResolveEnv(configPath, envName, appName string) (*ResultEnv, error) {
@@ -327,4 +351,58 @@ func deleteRemoteFile(client *ssh.Client, remotePath string) error {
 
 func isWindows() bool {
 	return strings.Contains(strings.ToLower(os.Getenv("OS")), "windows") || (os.PathSeparator == '\\')
+}
+
+func prepareTempWorkspaceWithGitWorktree(repoDir, branch string) (tmpRoot string, tmpProjectDir string, cleanup func(), err error) {
+	absRepo, err := filepath.Abs(filepath.FromSlash(repoDir))
+	if err != nil {
+		return "", "", nil, fmt.Errorf("取得 repo 絕對路徑失敗: %w", err)
+	}
+
+	tmpRoot, err = os.MkdirTemp("", "pack-worktree-*")
+	if err != nil {
+		return "", "", nil, fmt.Errorf("建立暫存目錄失敗: %w", err)
+	}
+
+	tmpProjectDir = filepath.Join(tmpRoot, "project")
+
+	cleanup = func() {
+		// 先讓 git 正確移除 worktree，再刪資料夾
+		_ = runGit(absRepo, "worktree", "remove", "--force", tmpProjectDir)
+		_ = runGit(absRepo, "worktree", "prune")
+		_ = os.RemoveAll(tmpRoot)
+	}
+
+	// 在 repo 上新增一個 dev 分支的 worktree 到 tmpProjectDir
+	// --force：即使目的地資料夾存在也強制（我們是新 temp，一般不會碰到）
+	if err := runGit(absRepo, "worktree", "add", "--force", tmpProjectDir, branch); err != nil {
+		cleanup()
+		return "", "", nil, err
+	}
+
+	// worktree 建好後，把分支更新到最新：
+	// 這裡用「fetch + reset --hard origin/<branch>」最穩，不依賴 upstream 設定，也避免 pull 互動式合併。
+	if err := runGit(tmpProjectDir, "fetch", "--prune", "origin", branch); err != nil {
+		cleanup()
+		return "", "", nil, err
+	}
+
+	if err := runGit(tmpProjectDir, "reset", "--hard", "origin/"+branch); err != nil {
+		cleanup()
+		return "", "", nil, err
+	}
+
+	return tmpRoot, tmpProjectDir, cleanup, nil
+}
+
+func runGit(repoDir string, args ...string) error {
+	// 用 git -C <repoDir> ... 讓命令永遠在正確 repo 上執行
+	fullArgs := append([]string{"-C", repoDir}, args...)
+	cmd := exec.Command("git", fullArgs...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("git %s 失敗: %w", strings.Join(args, " "), err)
+	}
+	return nil
 }
