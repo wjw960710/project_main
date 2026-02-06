@@ -14,8 +14,8 @@ func main() {
 	}()
 
 	var configPath string
-
 	flag.StringVar(&configPath, "config", "config.local.yml", "config 檔路徑")
+	flag.Parse()
 
 	fmt.Println("configPath", configPath)
 }
