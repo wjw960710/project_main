@@ -2,7 +2,7 @@
 apply: always
 ---
 
-# AI Rules
+# CHAT_RULES
 
 1. 聊天回覆必須使用 `简体中文`
 2. 代碼註釋必須使用 `繁體中文`
