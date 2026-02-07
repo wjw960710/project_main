@@ -4,6 +4,6 @@ apply: always
 
 # AI Rules
 
-1. All chat response messages must be written in Simplified Chinese (简体中文).
-2. All comments within the code must be written in Traditional Chinese (繁體中文).
-3. All provided code must strictly adhere to the formatting rules defined in `.oxfmtrc.json` and `.editorconfig`.
+1. 聊天回覆必須使用 `简体中文`
+2. 代碼註釋必須使用 `繁體中文`
+3. 代碼風格必須遵守專案下的 `.oxfmtrc.json` 與 `.editorconfig` 規則
