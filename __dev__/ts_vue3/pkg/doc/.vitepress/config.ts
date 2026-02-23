@@ -1,4 +1,6 @@
 import { defineConfig } from 'vitepress'
+import UnoCSS from 'unocss/vite'
+import path from 'node:path'
 
 export default defineConfig({
 	title: 'Component Library Docs',
@@ -13,6 +15,13 @@ export default defineConfig({
 				text: 'Guide',
 				items: [{ text: 'Introduction', link: '/guide' }],
 			},
+			{
+				text: 'Components',
+				items: [{ text: 'Button', link: '/button' }],
+			},
 		],
+	},
+	vite: {
+		plugins: [UnoCSS(path.resolve(__dirname, '../../lib_comp/uno.config.ts'))],
 	},
 })
