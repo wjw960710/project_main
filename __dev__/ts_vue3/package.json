@@ -4,12 +4,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "run-p type-check \"build-only {@}\" --",
-    "preview": "vite preview",
-    "test:unit": "vitest",
-    "build-only": "vite build",
-    "type-check": "vue-tsc --build"
+    "dev:ts_vue3": "vite",
+    "build:ts_vue3": "run-p type-check \"build-only {@}\" --",
+    "preview:ts_vue3": "vite preview",
+    "test:unit:ts_vue3": "vitest",
+    "build-only:ts_vue3": "vite build",
+    "type-check:ts_vue3": "vue-tsc --build"
   },
   "dependencies": {
     "vue": "^3.5.28"
