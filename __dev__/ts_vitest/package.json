@@ -1,0 +1,16 @@
+{
+  "name": "ts_vitest",
+  "type": "module",
+  "private": true,
+  "main": "index.js",
+  "scripts": {
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:run": "vitest run"
+  },
+  "devDependencies": {
+    "@vitest/ui": "^4.0.18",
+    "vite": "^7.3.1",
+    "vitest": "^4.0.18"
+  }
+}
