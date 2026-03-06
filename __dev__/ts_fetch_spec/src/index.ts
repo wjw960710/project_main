@@ -8,7 +8,9 @@ import TurndownService from 'turndown'
 
 const BASE_URL = 'http://192.168.168.199:3000'
 const STRUCTURE_API = `${BASE_URL}/api/structure`
-const DIST_DIR = path.join(__dirname, '../dist')
+// 根據執行環境決定輸出目錄 (Bun 編譯後的 exe 執行時會使用 "原型")
+const isCompiled = process.env.APP_ENV === 'production'
+const DIST_DIR = path.join(process.cwd(), isCompiled ? '原型' : 'dist')
 
 // 配置是否拉取 CSS 和 JS
 const FETCH_CSS = true
@@ -17,6 +19,7 @@ const FETCH_JS = false
 interface Spec {
 	id: string
 	title: string
+	last_ver: string
 }
 
 interface Module {
@@ -30,8 +33,10 @@ interface Project {
 	modules: Module[]
 }
 
-async function getSelectedSpec(): Promise<Spec> {
+async function getSelectedSpec(): Promise<{ spec: Spec; moduleName: string }> {
+	console.log(`Connecting to ${STRUCTURE_API}...`)
 	const response = await axios.get(STRUCTURE_API)
+	console.log('Structure fetched successfully.')
 	const projects: Project[] = response.data
 	const dpProject = projects.find(p => p.name === 'DP')
 
@@ -47,12 +52,14 @@ async function getSelectedSpec(): Promise<Spec> {
 		{ name: '自行輸入 SPEC_ID', value: 'CUSTOM_INPUT' },
 	]
 
-	const moduleName = await select({
+	console.log(`Select module: ${moduleChoices.length} choices available.`)
+	const moduleNameChoice = await select({
 		message: 'Select a module:',
 		choices: moduleChoices,
 	})
+	console.log(`Module selected: ${moduleNameChoice}`)
 
-	if (moduleName === 'CUSTOM_INPUT') {
+	if (moduleNameChoice === 'CUSTOM_INPUT') {
 		const specId = await input({
 			message: '請輸入 SPEC_ID (spec_XXX):',
 			validate: value => value.trim() !== '' || 'SPEC_ID 不能為空',
@@ -62,24 +69,26 @@ async function getSelectedSpec(): Promise<Spec> {
 		for (const m of dpProject.modules) {
 			const spec = m.specs.find(s => s.id === specId)
 			if (spec) {
-				return spec
+				return { spec, moduleName: m.name }
 			}
 		}
 
 		throw new Error(`找不到 ID 為 ${specId} 的規格`)
 	}
 
-	const selectedModule = dpProject.modules.find(m => m.name === moduleName)!
+	const selectedModule = dpProject.modules.find(m => m.name === moduleNameChoice)!
 
 	const selectedSpec = await select({
 		message: 'Select a spec:',
-		choices: selectedModule.specs.map(s => ({
-			name: `${s.title} ${s.id}`,
-			value: s,
-		})),
+		choices: selectedModule.specs
+			.filter(e => !!e.last_ver)
+			.map(s => ({
+				name: `${s.title} ${s.id}`,
+				value: s,
+			})),
 	})
 
-	return selectedSpec
+	return { spec: selectedSpec, moduleName: selectedModule.name }
 }
 
 async function downloadFile(url: string, localPath: string) {
@@ -108,14 +117,17 @@ async function downloadFile(url: string, localPath: string) {
 
 async function main() {
 	try {
-		const selectedSpec = await getSelectedSpec()
+		console.log('Script starting...')
+		const { spec: selectedSpec, moduleName } = await getSelectedSpec()
+		console.log('Spec selected:', selectedSpec.title)
 		const API_URL = `${BASE_URL}/api/specs/${selectedSpec.id}`
 
 		console.log(`Fetching from ${API_URL}...`)
 		const response = await axios.get(API_URL)
 		const { title, content } = response.data
 
-		const SPEC_DIST_DIR = path.join(DIST_DIR, title)
+		const MODULE_DIST_DIR = path.join(DIST_DIR, moduleName)
+		const SPEC_DIST_DIR = path.join(MODULE_DIST_DIR, title)
 
 		// 額外獲取根目錄的 HTML 以便獲取全域 CSS/JS
 		console.log(`Fetching root page from ${BASE_URL} to get global assets...`)
@@ -129,6 +141,9 @@ async function main() {
 		}
 		if (!fs.existsSync(DIST_DIR)) {
 			fs.mkdirSync(DIST_DIR, { recursive: true })
+		}
+		if (!fs.existsSync(MODULE_DIST_DIR)) {
+			fs.mkdirSync(MODULE_DIST_DIR, { recursive: true })
 		}
 		fs.mkdirSync(SPEC_DIST_DIR, { recursive: true })
 
@@ -291,6 +306,14 @@ async function main() {
 		console.log(`Successfully saved Markdown to ${mdPath}`)
 	} catch (error: any) {
 		console.error('Error fetching or processing the file:', error.message)
+		if (error.stack) {
+			console.error(error.stack)
+		}
+		console.log('\n按下 Enter 鍵以退出...')
+		await new Promise(resolve => {
+			process.stdin.resume()
+			process.stdin.once('data', resolve)
+		})
 		process.exit(1)
 	}
 }

@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "tsx src/index.ts",
-    "build": "tsc"
+    "build": "tsc",
+    "compile": "bun build src/index.ts --compile --minify --define \"process.env.APP_ENV='production'\" --outfile \"dist/fetch-spec.exe\""
   },
   "keywords": [],
   "author": "",
