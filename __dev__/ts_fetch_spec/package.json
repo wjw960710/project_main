@@ -6,7 +6,7 @@
   "scripts": {
     "start": "tsx src/index.ts",
     "build": "tsc",
-    "compile": "bun build src/index.ts --compile --minify --define \"process.env.APP_ENV='production'\" --outfile \"dist/fetch-spec.exe\""
+    "compile": "bun build src/index.ts --compile --minify --define \"process.env.APP_ENV='production'\" --outfile \"dist/fetch-spec.exe\" && ren dist\\fetch-spec.exe 新原型拉取腳本.exe"
   },
   "keywords": [],
   "author": "",
