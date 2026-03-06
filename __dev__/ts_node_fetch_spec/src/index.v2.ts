@@ -482,6 +482,9 @@ async function main() {
 
 		// 生成 Markdown
 		console.log('Generating Markdown content...')
+		const $md = cheerio.load($.html())
+		$md('.revision-section').remove() // 僅在 MD 中移除版本修訂紀錄
+
 		const turndownService = new TurndownService({
 			headingStyle: 'atx',
 			codeBlockStyle: 'fenced',
@@ -500,7 +503,7 @@ async function main() {
 			replacement: () => '',
 		})
 
-		const markdown = turndownService.turndown($.html())
+		const markdown = turndownService.turndown($md.html())
 		const mdPath = path.join(SPEC_DIST_DIR, 'index.md')
 		fs.writeFileSync(mdPath, markdown)
 		console.log(`Successfully saved Markdown to ${mdPath}`)
