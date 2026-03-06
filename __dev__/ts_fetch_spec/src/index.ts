@@ -4,6 +4,7 @@ import path from 'path'
 import { html as beautifyHtml } from 'js-beautify'
 import * as cheerio from 'cheerio'
 import { select, input } from '@inquirer/prompts'
+import TurndownService from 'turndown'
 
 const BASE_URL = 'http://192.168.168.199:3000'
 const STRUCTURE_API = `${BASE_URL}/api/structure`
@@ -53,7 +54,7 @@ async function getSelectedSpec(): Promise<Spec> {
 
 	if (moduleName === 'CUSTOM_INPUT') {
 		const specId = await input({
-			message: '請輸入 SPEC_ID:',
+			message: '請輸入 SPEC_ID (spec_XXX):',
 			validate: value => value.trim() !== '' || 'SPEC_ID 不能為空',
 		})
 
@@ -121,10 +122,13 @@ async function main() {
 		const rootResponse = await axios.get(BASE_URL)
 		const $root = cheerio.load(rootResponse.data)
 
-		// 在開始前重建 DIST_DIR
-		if (fs.existsSync(DIST_DIR)) {
-			console.log(`Recreating directory ${DIST_DIR}...`)
-			fs.rmSync(DIST_DIR, { recursive: true, force: true })
+		// 在開始前僅重建該 spec 的目錄
+		if (fs.existsSync(SPEC_DIST_DIR)) {
+			console.log(`Recreating directory ${SPEC_DIST_DIR}...`)
+			fs.rmSync(SPEC_DIST_DIR, { recursive: true, force: true })
+		}
+		if (!fs.existsSync(DIST_DIR)) {
+			fs.mkdirSync(DIST_DIR, { recursive: true })
 		}
 		fs.mkdirSync(SPEC_DIST_DIR, { recursive: true })
 
@@ -144,7 +148,9 @@ async function main() {
 				console.log(`Queuing download: ${imageUrl} -> ${localPath}`)
 				downloadPromises.push(downloadFile(imageUrl, localPath))
 
-				$(element).attr('src', relativePath)
+				// 標準化路徑，確保為相對路徑且無 / 開頭
+				const normalizedPath = relativePath.replace(/\\/g, '/')
+				$(element).attr('src', normalizedPath)
 			}
 		})
 
@@ -258,6 +264,31 @@ async function main() {
 		const jsonPath = path.join(SPEC_DIST_DIR, `${selectedSpec.id}.json`)
 		fs.writeFileSync(jsonPath, JSON.stringify(response.data, null, 2))
 		console.log(`Successfully saved raw JSON to ${jsonPath}`)
+
+		// 生成 Markdown
+		console.log('Generating Markdown content...')
+		const turndownService = new TurndownService({
+			headingStyle: 'atx',
+			codeBlockStyle: 'fenced',
+		})
+
+		// 移除多餘的互動資訊，如 "To open the popup, press Shift+Enter"
+		turndownService.addRule('removeInteractiveNoise', {
+			filter: node => {
+				const text = node.textContent?.trim()
+				return (
+					text === 'To open the popup, press Shift+Enter' ||
+					text === 'Paragraph' ||
+					text === '▼'
+				)
+			},
+			replacement: () => '',
+		})
+
+		const markdown = turndownService.turndown($.html())
+		const mdPath = path.join(SPEC_DIST_DIR, 'index.md')
+		fs.writeFileSync(mdPath, markdown)
+		console.log(`Successfully saved Markdown to ${mdPath}`)
 	} catch (error: any) {
 		console.error('Error fetching or processing the file:', error.message)
 		process.exit(1)

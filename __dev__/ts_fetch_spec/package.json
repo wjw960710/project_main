@@ -15,6 +15,7 @@
     "@types/cheerio": "^1.0.0",
     "@types/js-beautify": "^1.14.3",
     "@types/node": "^25.3.5",
+    "@types/turndown": "^5.0.6",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   },
@@ -22,6 +23,7 @@
     "@inquirer/prompts": "^8.3.0",
     "axios": "^1.13.6",
     "cheerio": "^1.2.0",
-    "js-beautify": "^1.15.4"
+    "js-beautify": "^1.15.4",
+    "turndown": "^7.2.2"
   }
 }
