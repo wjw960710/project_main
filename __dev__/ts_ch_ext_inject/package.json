@@ -1,0 +1,18 @@
+{
+  "name": "ts-chrome-extension-alpine",
+  "version": "0.0.1",
+  "description": "A Chrome Extension with TypeScript and Alpine.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@crxjs/vite-plugin": "^2.0.0-beta.23",
+    "@types/alpinejs": "^3.13.10",
+    "@types/chrome": "^0.0.268",
+    "alpinejs": "^3.13.10",
+    "typescript": "^5.4.5",
+    "vite": "^5.2.11"
+  }
+}

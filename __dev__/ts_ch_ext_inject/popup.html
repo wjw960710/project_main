@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Popup</title>
+    <style>
+        body { width: 200px; padding: 1rem; font-family: sans-serif; }
+    </style>
+</head>
+<body>
+    <div x-data="{ count: 0 }">
+        <h3 x-text="'Count: ' + count"></h3>
+        <button @click="count++">Increment</button>
+    </div>
+    <script type="module" src="./src/popup.ts"></script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "TS Alpine Chrome Extension",
+  "version": "1.0.0",
+  "description": "Chrome extension built with TypeScript and Alpine.js",
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "src/background.ts",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "js": ["src/content.ts"],
+      "matches": ["<all_urls>"]
+    },
+    {
+      "js": ["src/inject.ts"],
+      "matches": ["<all_urls>"],
+      "run_at": "document_start",
+      "world": "MAIN"
+    }
+  ],
+  "permissions": ["storage"]
+}
