@@ -1,17 +1,10 @@
 {
   "name": "fetch_spec",
-  "version": "1.0.0",
-  "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "tsx src/index.ts",
-    "build": "tsc",
-    "compile": "bun build src/index.ts --compile --minify --define \"process.env.APP_ENV='production'\" --outfile \"dist/fetch-spec.exe\" && ren dist\\fetch-spec.exe 新原型拉取腳本.exe"
+    "start": "tsx src/index.v2.ts",
+    "compile": "tsx scripts/compile.ts --entry src/index.v2.ts"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "packageManager": "pnpm@10.30.3",
   "devDependencies": {
     "@types/cheerio": "^1.0.0",
     "@types/js-beautify": "^1.14.3",
