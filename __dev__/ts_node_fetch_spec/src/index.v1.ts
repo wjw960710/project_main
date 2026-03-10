@@ -6,15 +6,47 @@ import * as cheerio from 'cheerio'
 import { select, input } from '@inquirer/prompts'
 import TurndownService from 'turndown'
 
-const BASE_URL = 'http://192.168.168.199:3000'
-const STRUCTURE_API = `${BASE_URL}/api/structure`
-// 根據執行環境決定輸出目錄 (Bun 編譯後的 exe 執行時會使用 "原型")
-const isCompiled = process.env.APP_ENV === 'production'
-const DIST_DIR = path.join(process.cwd(), isCompiled ? '原型' : 'dist')
-
 // 配置是否拉取 CSS 和 JS
 const FETCH_CSS = true
 const FETCH_JS = false
+
+// 配置
+let baseUrl = ''
+let structureApi = ''
+let distDir = ''
+
+async function initConfig() {
+	const configPath = path.join(process.cwd(), 'config.json')
+	try {
+		if (!fs.existsSync(configPath)) {
+			throw new Error('config.json 不存在')
+		}
+
+		const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'))
+		if (config.BASE_URL) {
+			baseUrl = config.BASE_URL
+		}
+	} catch (err) {
+		console.error(err)
+
+		baseUrl = await input({
+			message: '請輸入原型網址 (如: http://localhost:3000):',
+			validate: value => {
+				try {
+					new URL(value)
+					return true
+				} catch (e) {
+					return '請輸入有效的 URL (例如 http://localhost:3000)'
+				}
+			},
+		})
+	}
+
+	structureApi = `${baseUrl}/api/structure`
+	// 根據執行環境決定輸出目錄 (Bun 編譯後的 exe 執行時會使用 "原型")
+	const isCompiled = process.env.APP_ENV === 'production'
+	distDir = path.join(process.cwd(), isCompiled ? '原型' : 'dist')
+}
 
 interface Spec {
 	id: string
@@ -34,8 +66,8 @@ interface Project {
 }
 
 async function getSelectedSpec(): Promise<{ spec: Spec; moduleName: string }> {
-	console.log(`Connecting to ${STRUCTURE_API}...`)
-	const response = await axios.get(STRUCTURE_API)
+	console.log(`Connecting to ${structureApi}...`)
+	const response = await axios.get(structureApi)
 	console.log('Structure fetched successfully.')
 	const projects: Project[] = response.data
 	const dpProject = projects.find(p => p.name === 'DP')
@@ -117,21 +149,22 @@ async function downloadFile(url: string, localPath: string) {
 
 async function main() {
 	try {
+		await initConfig()
 		console.log('Script starting...')
 		const { spec: selectedSpec, moduleName } = await getSelectedSpec()
 		console.log('Spec selected:', selectedSpec.title)
-		const API_URL = `${BASE_URL}/api/specs/${selectedSpec.id}`
+		const API_URL = `${baseUrl}/api/specs/${selectedSpec.id}`
 
 		console.log(`Fetching from ${API_URL}...`)
 		const response = await axios.get(API_URL)
 		const { title, content } = response.data
 
-		const MODULE_DIST_DIR = path.join(DIST_DIR, moduleName)
+		const MODULE_DIST_DIR = path.join(distDir, moduleName)
 		const SPEC_DIST_DIR = path.join(MODULE_DIST_DIR, title)
 
 		// 額外獲取根目錄的 HTML 以便獲取全域 CSS/JS
-		console.log(`Fetching root page from ${BASE_URL} to get global assets...`)
-		const rootResponse = await axios.get(BASE_URL)
+		console.log(`Fetching root page from ${baseUrl} to get global assets...`)
+		const rootResponse = await axios.get(baseUrl)
 		const $root = cheerio.load(rootResponse.data)
 
 		// 在開始前僅重建該 spec 的目錄
@@ -139,8 +172,8 @@ async function main() {
 			console.log(`Recreating directory ${SPEC_DIST_DIR}...`)
 			fs.rmSync(SPEC_DIST_DIR, { recursive: true, force: true })
 		}
-		if (!fs.existsSync(DIST_DIR)) {
-			fs.mkdirSync(DIST_DIR, { recursive: true })
+		if (!fs.existsSync(distDir)) {
+			fs.mkdirSync(distDir, { recursive: true })
 		}
 		if (!fs.existsSync(MODULE_DIST_DIR)) {
 			fs.mkdirSync(MODULE_DIST_DIR, { recursive: true })
@@ -156,7 +189,7 @@ async function main() {
 		imgs.each((index, element) => {
 			const src = $(element).attr('src')
 			if (src && src.startsWith('/uploads/')) {
-				const imageUrl = `${BASE_URL}${src}`
+				const imageUrl = `${baseUrl}${src}`
 				const relativePath = src.startsWith('/') ? src.slice(1) : src
 				const localPath = path.join(SPEC_DIST_DIR, relativePath)
 
@@ -193,8 +226,8 @@ async function main() {
 					} else {
 						// 本地資源
 						downloadUrl = originalUrl.startsWith('/')
-							? `${BASE_URL}${originalUrl}`
-							: `${BASE_URL}/${originalUrl}`
+							? `${baseUrl}${originalUrl}`
+							: `${baseUrl}/${originalUrl}`
 						relativePath = originalUrl.startsWith('/') ? originalUrl.slice(1) : originalUrl
 					}
 
