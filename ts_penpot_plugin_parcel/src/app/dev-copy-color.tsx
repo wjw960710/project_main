@@ -1,5 +1,5 @@
 import { type ChangeEvent, type MouseEvent, useEffect, useMemo, useState } from 'react'
-import type { LibraryColor } from '@penpot/plugin-types'
+import type { Gradient, LibraryColor } from '@penpot/plugin-types'
 import { clone, debounce } from 'radash'
 import { MAP_LIB_UI_GROUP_NAME, MAP_NAME } from '@/constant/color-copy.ts'
 import { HighlightedText } from '@/shadcn-official/component-ui/highlighted-text.tsx'
@@ -25,11 +25,31 @@ import {
 } from '@/shadcn-official/component-ui/collapsible.tsx'
 import { copyToClipboard, snedMessage } from '@/util/action-ui.ts'
 import { sortColorNameList } from '@/util/color.ts'
+import { Tabs, TabsList, TabsTrigger } from '@/shadcn/official/component-ui/tabs.tsx'
 
-type UnoGroupColor = { group: string; list: string[] }
+type GradientStop = Gradient['stops'][number]
+
+type GroupColorListItem = {
+	name: string
+	path: string
+	content: string
+	isGradient: boolean
+	colorData: LibraryColor | GradientStop
+}
+
+type GroupColor = {
+	group: string
+	list: GroupColorListItem[]
+}
 
 const MAP_SEARCH_VALUE = {
 	allGroup: 'ALL',
+}
+
+const MODE_TAB = {
+	dp: 'dp',
+	ssUno: 'ssUno',
+	ssCss: 'ssCss',
 }
 
 export function App() {
@@ -42,7 +62,8 @@ export function App() {
 		text: '',
 	}))
 	const [resultSearchState, setResultSearchState] = useState(searchState)
-	const unoColorGroupList = useMemo(() => toUnoColorGroupList(groupLibColors), [groupLibColors])
+	const [modeTab, setModeTab] = useState(MODE_TAB.dp)
+	const unoColorGroupList = useMemo(() => toViewList(groupLibColors), [groupLibColors])
 	const dataBySearch = useMemo(() => {
 		let group = resultSearchState.group.trim()
 		if (group === MAP_SEARCH_VALUE.allGroup) group = ''
@@ -100,7 +121,7 @@ export function App() {
 			result.unoColorGroupList = result.unoColorGroupList
 				.map(e => {
 					const newList = e.list.filter(f => {
-						return highlights[isTextAnd ? 'every' : 'some'](g => f.includes(g))
+						return highlights[isTextAnd ? 'every' : 'some'](g => f.content.includes(g))
 					})
 					return {
 						...e,
@@ -157,15 +178,40 @@ export function App() {
 
 			copyToClipboard(
 				`{
-  ${unoColorGroup.list.join('\n  ')}
+  ${transformColorTexts(unoColorGroup.list).join('\n  ')}
 }`,
 				MAP_LIB_UI_GROUP_NAME[unoColorGroup.group] || unoColorGroup.group,
 			)
 		}
 	}
 
-	function handleCopyUnoColorString(idx: string, lineText: string) {
-		return () => copyToClipboard(lineText, `${idx} 顏色`)
+	function transformColorTexts<T extends GroupColorListItem | GroupColorListItem[]>(
+		item: T,
+	): T extends any[] ? string[] : string {
+		const isArrTextParam = Array.isArray(item)
+		const items = isArrTextParam ? item : [item]
+		const result = [] as string[]
+
+		items.forEach(e => {
+			let content = e.content
+
+			if (modeTab === MODE_TAB.dp) {
+				content = toUnoColorString(e)
+			} else if (modeTab === MODE_TAB.ssUno) {
+				content = toSsUnoColorString(e)
+			} else if (modeTab === MODE_TAB.ssCss) {
+				content = toSsCssColorString(e)
+			}
+
+			result.push(content)
+		})
+
+		if (isArrTextParam) return result as any
+		return result[0] || ('' as any)
+	}
+
+	function handleCopyUnoColorString(idx: string, lineItem: GroupColorListItem) {
+		return () => copyToClipboard(transformColorTexts(lineItem), `${idx} 顏色`)
 	}
 
 	function handleOpenChange(group: string) {
@@ -175,6 +221,30 @@ export function App() {
 				[group]: collapsedGroup[group] == null ? false : !collapsedGroup[group],
 			}))
 		}
+	}
+
+	function handleExpandAll() {
+		const result: Record<string, boolean> = {}
+
+		dataBySearch.unoColorGroupList.forEach(e => {
+			result[e.group] = true
+		})
+
+		setCollapsedGroup(result)
+	}
+
+	function handleCollapseAll() {
+		const result: Record<string, boolean> = {}
+
+		dataBySearch.unoColorGroupList.forEach(e => {
+			result[e.group] = false
+		})
+
+		setCollapsedGroup(result)
+	}
+
+	function handleChangeModeTab(tab: string) {
+		setModeTab(tab)
 	}
 
 	return (
@@ -217,6 +287,28 @@ export function App() {
 					/>
 				</div>
 			</div>
+
+			<div className="flex items-center">
+				<div className={'mr-2'}>複製格式</div>
+				<Tabs className={'mr-auto'} value={modeTab} onValueChange={handleChangeModeTab}>
+					<TabsList>
+						<TabsTrigger value={MODE_TAB.dp}>DP</TabsTrigger>
+						<TabsTrigger value={MODE_TAB.ssUno}>SS UNO</TabsTrigger>
+						<TabsTrigger value={MODE_TAB.ssCss}>SS CSS</TabsTrigger>
+					</TabsList>
+				</Tabs>
+				<div className="ml-2">
+					全
+					<span className={'cursor-pointer'} onClick={handleExpandAll}>
+						展開
+					</span>
+					/
+					<span className={'cursor-pointer'} onClick={handleCollapseAll}>
+						收合
+					</span>
+				</div>
+			</div>
+
 			<div className="w-full">
 				{dataBySearch.unoColorGroupList.map(e => {
 					const isOpen = collapsedGroup[e.group] || collapsedGroup[e.group] == null
@@ -257,7 +349,7 @@ export function App() {
 								const idx = String(j + 1).padStart(String(e.list.length).length, '0')
 
 								return (
-									<CollapsibleContent key={f} className={'pl-4'}>
+									<CollapsibleContent key={f.name} className={'pl-4'}>
 										<span className={'mr-1 text-gray-400'}>
 											<BsCopy
 												className={'mr-1 inline cursor-pointer'}
@@ -265,7 +357,7 @@ export function App() {
 											/>
 											{idx}.
 										</span>
-										<HighlightedText text={f} highlights={dataBySearch.highlights} />
+										<HighlightedText text={f.content} highlights={dataBySearch.highlights} />
 									</CollapsibleContent>
 								)
 							})}
@@ -277,49 +369,81 @@ export function App() {
 	)
 }
 
-function toUnoColorGroupList(groupLibColors: Record<string, LibraryColor[]>) {
+function toViewColorValue(color: { color?: string | null; opacity?: number | null }) {
+	if (color.opacity != null) {
+		if (color.opacity < 1) return `${color.color}(${color.opacity})`
+	}
+
+	return color.color
+}
+
+function toViewList(groupLibColors: Record<string, LibraryColor[]>) {
 	const clonedGroupLibColors: Record<string, LibraryColor[]> = clone(groupLibColors)
-	const result: UnoGroupColor[] = []
+	const result: GroupColor[] = []
+
 	Object.entries(clonedGroupLibColors).forEach(([k, e]) => {
 		const sortedColors = sortColorNameList(e)
-		const resultItem = { group: k, list: [] as string[] }
+		const resultItem = { group: k, list: [] } as GroupColor
 
 		sortedColors.forEach(e => {
 			if (!e.name) return
 
 			const isGradient = e.gradient?.stops != null
 
-			// region 尾註釋版本(後續可以考慮看看要不要修化成這樣)
 			if (isGradient) {
 				e.gradient!.stops.forEach((f, i) => {
-					resultItem.list.push(`${e.name}_${i + 1}: ${toColorValue(f)},${colorDoc(e.path)}`)
+					const name = `${e.name}_${i + 1}`
+					resultItem.list.push({
+						content: `${name} ﹍ ${toViewColorValue(f)} ﹍ ${e.path}`,
+						name,
+						path: e.path,
+						isGradient,
+						colorData: f,
+					})
 				})
 			} else {
-				resultItem.list.push(`${e.name}: ${toColorValue(e)},${colorDoc(e.path)}`)
+				const name = e.name
+				resultItem.list.push({
+					content: `${name} ﹍ ${toViewColorValue(e)} ﹍ ${e.path}`,
+					name,
+					path: e.path,
+					isGradient,
+					colorData: e,
+				})
 			}
-			// endregion
 		})
 
 		if (resultItem.list.length) result.push(resultItem)
 	})
 
 	return result
+}
 
-	function colorDoc(txt: string) {
-		return emptyTxt(txt, '', { exists: txt => ` // ${txt}` })
+function toSsUnoColorString(groupColorListItem: GroupColorListItem): string {
+	const { name, path } = groupColorListItem
+	return `${name}: 'var(--color-${name})',${colorDoc(path)}`
+}
+
+function toSsCssColorString(groupColorListItem: GroupColorListItem): string {
+	const { name, isGradient, colorData } = groupColorListItem
+
+	if (isGradient) {
+		const stop = colorData as GradientStop
+		return `--color-${name}: ${toCssVarText(stop)};`
 	}
 
-	function emptyTxt(
-		txt: string,
-		elseTxt: string,
-		customizer = {} as {
-			exists?: (txt: string) => string
-			empty?: (txt: string) => string
-		},
-	) {
-		if (!txt?.trim().length) return customizer.empty ? customizer.empty(elseTxt) : elseTxt
-		return customizer.exists ? customizer.exists(txt) : txt
+	return `--color-${name}: ${toCssVarText(colorData)};`
+}
+
+function toUnoColorString(groupColorListItem: GroupColorListItem): string {
+	const { name, path, isGradient, colorData } = groupColorListItem
+
+	if (isGradient) {
+		const stop = colorData as GradientStop
+		return `${name}: ${toColorValue(stop)},${colorDoc(path)}`
 	}
+
+	return `${name}: ${toColorValue(colorData as LibraryColor)},${colorDoc(path)}`
 
 	function toColorValue(color: { color?: string | null; opacity?: number | null }) {
 		if (color.opacity != null) {
@@ -328,4 +452,59 @@ function toUnoColorGroupList(groupLibColors: Record<string, LibraryColor[]>) {
 
 		return `'${color.color}'`
 	}
+}
+
+function colorDoc(txt: string) {
+	return emptyTxt(txt, '', { exists: txt => ` // ${txt}` })
+}
+
+function emptyTxt(
+	txt: string,
+	elseTxt: string,
+	customizer = {} as {
+		exists?: (txt: string) => string
+		empty?: (txt: string) => string
+	},
+) {
+	if (!txt?.trim().length) return customizer.empty ? customizer.empty(elseTxt) : elseTxt
+	return customizer.exists ? customizer.exists(txt) : txt
+}
+
+function toCssVarText(color: LibraryColor | GradientStop) {
+	if (color.opacity != null && color.opacity < 1) {
+		return hexToRgba(color.color!, color.opacity)
+	}
+
+	return color.color
+}
+
+function hexToRgba(hex: string, alpha = 1) {
+	/* 驗證透明度範圍 */
+	if (alpha < 0) {
+		alpha = 0
+	} else if (alpha > 1) {
+		alpha = 1
+	}
+
+	/* 移除開頭的 # */
+	let normalizedHex = hex.replace(/^#/, '')
+
+	/* 支援 3 碼 hex，例如 #fff */
+	if (normalizedHex.length === 3) {
+		normalizedHex = normalizedHex
+			.split('')
+			.map(char => char + char)
+			.join('')
+	}
+
+	/* 驗證 hex 格式 */
+	if (!/^[\da-fA-F]{6}$/.test(normalizedHex)) {
+		throw new Error('hex 格式不正確，請使用 #RRGGBB 或 #RGB')
+	}
+
+	const r = Number.parseInt(normalizedHex.slice(0, 2), 16)
+	const g = Number.parseInt(normalizedHex.slice(2, 4), 16)
+	const b = Number.parseInt(normalizedHex.slice(4, 6), 16)
+
+	return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }
