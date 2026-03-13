@@ -33,8 +33,8 @@ type GroupColorListItem = {
 	name: string
 	path: string
 	content: string
-	isGradient: boolean
-	colorData: LibraryColor | GradientStop
+	stop?: GradientStop
+	color?: LibraryColor
 }
 
 type GroupColor = {
@@ -397,8 +397,7 @@ function toViewList(groupLibColors: Record<string, LibraryColor[]>) {
 						content: `${name} ﹍ ${toViewColorValue(f)} ﹍ ${e.path}`,
 						name,
 						path: e.path,
-						isGradient,
-						colorData: f,
+						stop: f,
 					})
 				})
 			} else {
@@ -407,8 +406,7 @@ function toViewList(groupLibColors: Record<string, LibraryColor[]>) {
 					content: `${name} ﹍ ${toViewColorValue(e)} ﹍ ${e.path}`,
 					name,
 					path: e.path,
-					isGradient,
-					colorData: e,
+					color: e,
 				})
 			}
 		})
@@ -425,25 +423,23 @@ function toSsUnoColorString(groupColorListItem: GroupColorListItem): string {
 }
 
 function toSsCssColorString(groupColorListItem: GroupColorListItem): string {
-	const { name, isGradient, colorData } = groupColorListItem
+	const { name, stop, color } = groupColorListItem
 
-	if (isGradient) {
-		const stop = colorData as GradientStop
+	if (stop) {
 		return `--color-${name}: ${toCssVarText(stop)};`
 	}
 
-	return `--color-${name}: ${toCssVarText(colorData)};`
+	return `--color-${name}: ${toCssVarText(color!)};`
 }
 
 function toUnoColorString(groupColorListItem: GroupColorListItem): string {
-	const { name, path, isGradient, colorData } = groupColorListItem
+	const { name, path, stop, color } = groupColorListItem
 
-	if (isGradient) {
-		const stop = colorData as GradientStop
+	if (stop) {
 		return `${name}: ${toColorValue(stop)},${colorDoc(path)}`
 	}
 
-	return `${name}: ${toColorValue(colorData as LibraryColor)},${colorDoc(path)}`
+	return `${name}: ${toColorValue(color!)},${colorDoc(path)}`
 
 	function toColorValue(color: { color?: string | null; opacity?: number | null }) {
 		if (color.opacity != null) {
@@ -470,12 +466,12 @@ function emptyTxt(
 	return customizer.exists ? customizer.exists(txt) : txt
 }
 
-function toCssVarText(color: LibraryColor | GradientStop) {
+function toCssVarText(color: { color?: string | null; opacity?: number | null }) {
 	if (color.opacity != null && color.opacity < 1) {
 		return hexToRgba(color.color!, color.opacity)
 	}
 
-	return color.color
+	return color.color!
 }
 
 function hexToRgba(hex: string, alpha = 1) {
