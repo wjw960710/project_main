@@ -1,8 +1,14 @@
-import { type ChangeEvent, type MouseEvent, useEffect, useMemo, useState } from 'react'
+import {
+	type ChangeEvent,
+	type MouseEvent,
+	type ReactNode,
+	useEffect,
+	useMemo,
+	useState,
+} from 'react'
 import type { Gradient, LibraryColor } from '@penpot/plugin-types'
 import { clone, debounce } from 'radash'
 import { MAP_LIB_UI_GROUP_NAME, MAP_NAME } from '@/constant/color-copy.ts'
-import { HighlightedText } from '@/shadcn-official/component-ui/highlighted-text.tsx'
 import {
 	Tooltip,
 	TooltipContent,
@@ -25,14 +31,14 @@ import {
 } from '@/shadcn-official/component-ui/collapsible.tsx'
 import { copyToClipboard, snedMessage } from '@/util/action-ui.ts'
 import { sortColorNameList } from '@/util/color.ts'
-import { Tabs, TabsList, TabsTrigger } from '@/shadcn/official/component-ui/tabs.tsx'
+import { Tabs, TabsList, TabsTrigger } from '@/shadcn-official/component-ui/tabs.tsx'
 
 type GradientStop = Gradient['stops'][number]
 
 type GroupColorListItem = {
 	name: string
 	path: string
-	content: string
+	viewColor: string
 	stop?: GradientStop
 	color?: LibraryColor
 }
@@ -45,6 +51,14 @@ type GroupColor = {
 const MAP_SEARCH_VALUE = {
 	allGroup: 'ALL',
 }
+
+const MAP_SEARCH_TYPE = {
+	all: 'ALL',
+	name: 'NAME',
+	color: 'COLOR',
+	path: 'PATH',
+} as const
+type SearchType = (typeof MAP_SEARCH_TYPE)[keyof typeof MAP_SEARCH_TYPE]
 
 const MODE_TAB = {
 	dp: 'dp',
@@ -59,6 +73,7 @@ export function App() {
 	const [collapsedGroup, setCollapsedGroup] = useState<Record<string, boolean>>({})
 	const [searchState, setSearchState] = useState(() => ({
 		group: MAP_SEARCH_VALUE.allGroup,
+		type: MAP_SEARCH_TYPE.name as SearchType,
 		text: '',
 	}))
 	const [resultSearchState, setResultSearchState] = useState(searchState)
@@ -121,7 +136,7 @@ export function App() {
 			result.unoColorGroupList = result.unoColorGroupList
 				.map(e => {
 					const newList = e.list.filter(f => {
-						return highlights[isTextAnd ? 'every' : 'some'](g => f.content.includes(g))
+						return highlights[isTextAnd ? 'every' : 'some'](g => mergeContent(f).includes(g))
 					})
 					return {
 						...e,
@@ -129,6 +144,13 @@ export function App() {
 					}
 				})
 				.filter(e => e.list.length > 0)
+		}
+
+		function mergeContent(item: GroupColorListItem) {
+			if (resultSearchState.type === MAP_SEARCH_TYPE.name) return item.name
+			if (resultSearchState.type === MAP_SEARCH_TYPE.color) return item.viewColor
+			if (resultSearchState.type === MAP_SEARCH_TYPE.path) return item.path
+			return item.name + item.viewColor + item.path
 		}
 
 		return result
@@ -255,7 +277,7 @@ export function App() {
 						<SelectValue />
 					</SelectTrigger>
 					<SelectContent>
-						<SelectItem value={MAP_SEARCH_VALUE.allGroup}>全部</SelectItem>
+						<SelectItem value={MAP_SEARCH_VALUE.allGroup}>全部資源顏色組</SelectItem>
 						{unoColorGroupList.map(e => {
 							return (
 								<SelectItem key={e.group} value={e.group}>
@@ -278,13 +300,26 @@ export function App() {
 							</p>
 						</TooltipContent>
 					</Tooltip>
-					<Input
-						className={'flex-1'}
-						type="text"
-						placeholder="請輸入篩選條件"
-						value={searchState.text}
-						onChange={handleChangeSearch('text')}
-					/>
+					<div className="flex-1 flex items-center">
+						<Select value={searchState.type} onValueChange={handleChangeSearch('type')}>
+							<SelectTrigger>
+								<SelectValue />
+							</SelectTrigger>
+							<SelectContent>
+								<SelectItem value={MAP_SEARCH_TYPE.all}>全部</SelectItem>
+								<SelectItem value={MAP_SEARCH_TYPE.name}>色名</SelectItem>
+								<SelectItem value={MAP_SEARCH_TYPE.color}>色號</SelectItem>
+								<SelectItem value={MAP_SEARCH_TYPE.path}>作用域</SelectItem>
+							</SelectContent>
+						</Select>
+						<Input
+							className={'flex-1 ml-1'}
+							type="text"
+							placeholder="請輸入內文篩選條件"
+							value={searchState.text}
+							onChange={handleChangeSearch('text')}
+						/>
+					</div>
 				</div>
 			</div>
 
@@ -357,7 +392,11 @@ export function App() {
 											/>
 											{idx}.
 										</span>
-										<HighlightedText text={f.content} highlights={dataBySearch.highlights} />
+										<HighlightedText
+											item={f}
+											type={resultSearchState.type}
+											highlights={dataBySearch.highlights}
+										/>
 									</CollapsibleContent>
 								)
 							})}
@@ -374,7 +413,7 @@ function toViewColorValue(color: { color?: string | null; opacity?: number | nul
 		if (color.opacity < 1) return `${color.color}(${color.opacity})`
 	}
 
-	return color.color
+	return color.color!
 }
 
 function toViewList(groupLibColors: Record<string, LibraryColor[]>) {
@@ -393,19 +432,23 @@ function toViewList(groupLibColors: Record<string, LibraryColor[]>) {
 			if (isGradient) {
 				e.gradient!.stops.forEach((f, i) => {
 					const name = `${e.name}_${i + 1}`
+					const path = e.path
+					const viewColor = toViewColorValue(f)
 					resultItem.list.push({
-						content: `${name} ﹍ ${toViewColorValue(f)} ﹍ ${e.path}`,
 						name,
-						path: e.path,
+						path,
+						viewColor,
 						stop: f,
 					})
 				})
 			} else {
 				const name = e.name
+				const path = e.path
+				const viewColor = toViewColorValue(e)
 				resultItem.list.push({
-					content: `${name} ﹍ ${toViewColorValue(e)} ﹍ ${e.path}`,
 					name,
-					path: e.path,
+					path,
+					viewColor,
 					color: e,
 				})
 			}
@@ -503,4 +546,59 @@ function hexToRgba(hex: string, alpha = 1) {
 	const b = Number.parseInt(normalizedHex.slice(4, 6), 16)
 
 	return `rgba(${r}, ${g}, ${b}, ${alpha})`
+}
+
+type HighlightedTextProps = {
+	item: GroupColorListItem
+	type: SearchType
+	highlights: string[]
+}
+
+const htIdxType: SearchType[] = ['NAME', 'COLOR', 'PATH']
+
+function HighlightedText({ item, type, highlights }: HighlightedTextProps) {
+	const texts = [item.name, item.viewColor, item.path]
+	const isAllHighlight = type === 'ALL'
+	// ﹍
+	// 過濾掉空字串並轉義正則特殊字元
+	const validHighlights = highlights
+		.filter(h => h.trim() !== '')
+		.map(h => h.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+
+	if (validHighlights.length === 0) {
+		return <span>{texts.join(' ﹍ ')}</span>
+	}
+
+	// 將多個關鍵字用 | 組合，例如 (keyword1|keyword2)
+	const regex = new RegExp(`(${validHighlights.join('|')})`, 'gi')
+
+	return (
+		<span>
+			{texts.map((text, i) => {
+				const isHighlightCheck = isAllHighlight || htIdxType[i] === type
+				const textEls: ReactNode[] = []
+
+				if (isHighlightCheck) {
+					// 檢查該部分是否與任何一個關鍵字匹配
+					if (regex.test(text)) {
+						textEls.push(
+							<mark key={i} className="rounded-sm bg-yellow-300 text-black">
+								{text}
+							</mark>,
+						)
+					}
+				}
+
+				if (!textEls.length) {
+					textEls.push(<span key={i}>{text}</span>)
+				}
+
+				if (i > 0) {
+					textEls.unshift(<span key={'.' + i}> ﹍ </span>)
+				}
+
+				return textEls
+			})}
+		</span>
+	)
 }

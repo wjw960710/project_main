@@ -31,7 +31,7 @@ import {
 	CollapsibleContent,
 	CollapsibleTrigger,
 } from '@/shadcn-official/component-ui/collapsible.tsx'
-import { HighlightedText } from '@/shadcn-official/component-ui/highlighted-text.tsx'
+import { HighlightedText } from '@/component/highlighted-text.tsx'
 import { rgba } from 'polished'
 import { sortColorNameList } from '@/util/color.ts'
 
