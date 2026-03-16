@@ -1,6 +1,7 @@
 import cp from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
+import os from 'node:os'
 import { NodeSSH, type Config } from 'node-ssh'
 import yaml from 'js-yaml'
 import { bootstrapCac } from '../build-recipe/cac'
@@ -38,6 +39,10 @@ const defaultCliOptions = {
 		desc: '應用名稱',
 		defaultValue: '',
 	},
+	'--branch <string>': {
+		desc: '分支名稱',
+		defaultValue: '',
+	},
 	'--skip_build <boolean>': {
 		desc: '是否要略過打包',
 		defaultValue: false,
@@ -56,8 +61,8 @@ main().catch(console.error)
 
 // 主函數
 async function main() {
-	if (!options.config || !options.env || !options.app) {
-		throw new Error('缺少必要的配置檔參數 --config, --env, --app')
+	if (!options.config || !options.env || !options.app || !options.branch) {
+		throw new Error('缺少必要的配置檔參數 --config, --env, --app, --branch')
 	}
 
 	const yamlTxt = fs.readFileSync(options.config, 'utf8')
@@ -108,21 +113,34 @@ async function main() {
 		port: 22,
 	}
 
-	if (!options.skip_build) {
-		console.log('開始運行打包指令 ...')
-		await runCommand(env.app.build_exec, env.app.project_dir)
-		console.log('✅ 已完成運行打包指令')
-	}
-
 	let conn: NodeSSH | null = null
+	let buildProjectDir = env.app.project_dir
+	let cleanup: (() => void) | undefined
+
 	try {
+		if (!options.skip_build) {
+			const workspace = await prepareTempWorkspaceWithGitWorktree(
+				env.app.project_dir,
+				options.branch,
+			)
+			buildProjectDir = workspace.tmpProjectDir
+			cleanup = workspace.cleanup
+
+			console.log(`使用暫存 workspace: ${workspace.tmpRoot}`)
+			console.log(`worktree 位置: ${buildProjectDir}`)
+
+			console.log('開始運行打包指令 ...')
+			await runCommand(env.app.build_exec, buildProjectDir)
+			console.log('✅ 已完成運行打包指令')
+		}
+
 		// 建立連線
 		conn = await connect(sshConfig)
 		const homePath = await resolveRemotePath(conn, '~')
 
 		const [, remoteBundleZipFilepath] = await uploadFile(
 			conn,
-			path.join(env.app.project_dir, env.app.upload_file),
+			path.join(buildProjectDir, env.app.upload_file),
 			homePath,
 		)
 		console.log('✅ 檔案上傳成功!')
@@ -145,6 +163,10 @@ async function main() {
 			conn.dispose()
 		}
 		throw error
+	} finally {
+		if (cleanup) {
+			cleanup()
+		}
 	}
 }
 
@@ -222,6 +244,47 @@ async function deleteRemoteFile(conn: NodeSSH, remotePath: string): Promise<void
 }
 
 /**
+ * 準備暫存工作區與 Git Worktree
+ * @param repoDir 專案目錄
+ * @param branch 分支名稱
+ */
+async function prepareTempWorkspaceWithGitWorktree(repoDir: string, branch: string) {
+	const absRepo = path.resolve(repoDir)
+	const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'pack-worktree-'))
+	const tmpProjectDir = path.join(tmpRoot, 'project')
+
+	const runGit = async (dir: string, ...args: string[]) => {
+		const cmd = `git -C "${dir}" ${args.join(' ')}`
+		await runCommand(cmd, dir)
+	}
+
+	const cleanup = () => {
+		try {
+			// 先讓 git 正確移除 worktree，再刪資料夾
+			cp.execSync(`git -C "${absRepo}" worktree remove --force "${tmpProjectDir}"`)
+			cp.execSync(`git -C "${absRepo}" worktree prune`)
+			fs.rmSync(tmpRoot, { recursive: true, force: true })
+		} catch (e) {
+			console.error('清理暫存目錄失敗:', e)
+		}
+	}
+
+	try {
+		// 在 repo 上新增一個分支的 worktree 到 tmpProjectDir
+		await runGit(absRepo, 'worktree', 'add', '--force', `"${tmpProjectDir}"`, branch)
+
+		// worktree 建好後，把分支更新到最新
+		await runGit(tmpProjectDir, 'fetch', '--prune', 'origin', branch)
+		await runGit(tmpProjectDir, 'reset', '--hard', `origin/${branch}`)
+
+		return { tmpRoot, tmpProjectDir, cleanup }
+	} catch (error) {
+		cleanup()
+		throw error
+	}
+}
+
+/**
  * 在指定目录执行命令的简化版本
  * @param command - 命令字符串
  * @param cwd - 工作目录
@@ -231,9 +294,13 @@ export async function runCommand(command: string, cwd: string) {
 		console.log(`📂 目录: ${cwd}`)
 		console.log(`🚀 命令: ${command}`)
 
-		const childProcess = cp.exec(command, {
+		const isWindows = process.platform === 'win32'
+		const shell = isWindows ? 'cmd.exe' : 'sh'
+		const shellArgs = isWindows ? ['/C', command] : ['-lc', command]
+
+		const childProcess = cp.spawn(shell, shellArgs, {
 			cwd,
-			maxBuffer: 1024 * 1024 * 10, // 10MB buffer
+			shell: isWindows, // 在 Windows 上 spawn 需要 shell: true 才能執行 cmd /c
 		})
 
 		let stdout = ''
@@ -259,7 +326,7 @@ export async function runCommand(command: string, cwd: string) {
 				console.log('✅ 执行成功')
 				resolve({ success: true, output: stdout, error: stderr })
 			} else {
-				console.error(`❌ 执行失败，退出码: ${code}`)
+				console.error(`❌ 执行失败，退出碼: ${code}`)
 				reject(new Error(`Command failed with exit code ${code}`))
 			}
 		})
