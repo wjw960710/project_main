@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { userEvent } from 'vitest/browser'
-import { setupCatApp } from '../../src/__eg__/CatApp'
+import { setupCatApp } from '@/__eg__/CatApp.ts'
 
 describe('CatApp Browser Mode 測試', () => {
 	beforeEach(() => {

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { getByText, getByAltText, waitFor } from '@testing-library/dom'
 import '@testing-library/jest-dom/vitest'
-import { setupCatApp } from '../../src/__eg__/CatApp'
+import { setupCatApp } from '@/__eg__/CatApp.ts'
 
 describe('CatApp 介面互動測試', () => {
 	let container: HTMLElement
