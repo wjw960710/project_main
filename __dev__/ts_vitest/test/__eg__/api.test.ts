@@ -7,7 +7,16 @@ import { describe, it, expect } from 'vitest'
 describe('TheCatAPI 自動化測試範例', () => {
 	const BASE_URL = 'https://api.thecatapi.com/v1'
 
+	beforeEach(() => {
+		console.log('beforeEach')
+	})
+
+	afterEach(() => {
+		console.log('afterEach')
+	})
+
 	it('應該能成功取得貓咪圖片列表', async () => {
+		console.log('應該能成功取得貓咪圖片列表')
 		// 使用原生 fetch (Node.js 18+ 內建)
 		const response = await fetch(`${BASE_URL}/images/search`)
 
@@ -32,6 +41,7 @@ describe('TheCatAPI 自動化測試範例', () => {
 	})
 
 	it('應該能限制取得圖片的數量', async () => {
+		console.log('應該能限制取得圖片的數量')
 		// 註：TheCatAPI 在未提供 API Key 的情況下，limit 最大值可能受限，且行為可能依據 API 版本有所不同
 		const limit = 3
 		const response = await fetch(`${BASE_URL}/images/search?limit=${limit}`)
@@ -43,6 +53,7 @@ describe('TheCatAPI 自動化測試範例', () => {
 	})
 
 	it('當請求不存在的路徑時應該回傳 404', async () => {
+		console.log('當請求不存在的路徑時應該回傳 404')
 		const response = await fetch(`${BASE_URL}/non-existent-endpoint`)
 
 		// 注意：某些 API 可能會導向首頁或回傳 404，這裡以 404 為例
