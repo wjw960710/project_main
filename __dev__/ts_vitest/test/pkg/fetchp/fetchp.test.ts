@@ -1,4 +1,5 @@
-import { createFetchp } from '@pkg/fetchp/fetchp'
+import { fetchp } from '@pkg/fetchp/fetchp'
+import { transformUrl } from '@pkg/fetchp/utils/transform-url.ts'
 import { vi } from 'vitest'
 
 describe('pkg fetchp', () => {
@@ -10,7 +11,7 @@ describe('pkg fetchp', () => {
 				return {
 					ok: true,
 					status: 200,
-					json: async () => ({ version: '1.0.0' }),
+					json: async () => ({ code: '200', data: { version: '1.0.0' } }),
 					headers: new Headers(),
 				}
 			}),
@@ -22,12 +23,61 @@ describe('pkg fetchp', () => {
 	})
 
 	it('隨便測測', async () => {
-		const fetchp = createFetchp()
-		const res = await fetchp('http://aaa.bbb')
-		expect(res.ok).toBe(true)
-		expect(res.status).toBe(200)
+		const res = await fetchp('{get}http://aaa.bbb')
+		expect(res.version).toBe('1.0.0')
+	})
 
-		const data = await res.json()
-		expect(data.version).toBe('1.0.0')
+	it('驗證 URL 轉換是否正確', async () => {
+		expect(transformUrl('{get/api/user')).toEqual({
+			method: 'get',
+			url: '',
+			cache: false,
+		})
+
+		expect(transformUrl('{get/api/user')).toEqual({
+			method: 'get',
+			url: '',
+			cache: true,
+		})
+
+		expect(transformUrl('{get/api/user', { 'get/api/user': '123' })).toEqual({
+			method: 'get',
+			url: '',
+			cache: true,
+		})
+
+		expect(transformUrl('{get}/api/user')).toEqual({
+			method: 'get',
+			url: '/api/user',
+			cache: false,
+		})
+
+		expect(transformUrl('{get}/api/user/{id}')).toEqual({
+			method: 'get',
+			url: '/api/user/undefined',
+			cache: false,
+		})
+
+		expect(transformUrl('{get}/api/user/{id}', { id: '123' })).toEqual({
+			method: 'get',
+			url: '/api/user/123',
+			cache: true,
+		})
+
+		expect(
+			transformUrl('{get}/api/user/{id}/job/{name}', { id: '123', name: 'frank' }),
+		).toEqual({
+			method: 'get',
+			url: '/api/user/123/job/frank',
+			cache: false,
+		})
+
+		expect(
+			transformUrl('{get}/api/user/{id}/job/{name}', { hello: '123', name: 'frank' }),
+		).toEqual({
+			method: 'get',
+			url: '/api/user/undefined/job/frank',
+			cache: true,
+		})
 	})
 })
