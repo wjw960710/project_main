@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "test": "vitest",
+    "test:dp": "vitest run test/__dp__",
     "test:eg": "vitest run test/__eg__",
     "test:tmpl": "vitest run test/__tmpl__",
     "test:browser": "vitest --config vitest.browser.config.ts",
