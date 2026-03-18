@@ -1,15 +1,19 @@
+import type { FetchpUrlTransform } from '@pkg/fetchp/fetchp.type.ts'
+
 type CacheUrl = {
 	method: string
 	urls: (string | undefined)[]
 	dynamicParams?: Map<number, string>
 }
+
 const cacheUrls = new Map<string, CacheUrl>()
-// url 格式為 {METHOD}:{URL (動態為 :dynamic_name)}
-// eg: get:/api/user/:id
+
+// 格式參考 {get}/api/user/{id}
+//         {post}/api/user/detail
 export function transformUrl(
 	url: string,
-	params?: Record<string, string>,
-): { method: string; url: string; cache: true } {
+	pathParams?: Record<string, string>,
+): FetchpUrlTransform {
 	let cacheUrl = cacheUrls.get(url) as CacheUrl
 	let isCache = !!cacheUrl
 
@@ -59,9 +63,9 @@ export function transformUrl(
 		const e = cacheUrl.urls[i]
 
 		if (!e) {
-			if (params && cacheUrl.dynamicParams) {
+			if (pathParams && cacheUrl.dynamicParams) {
 				const paramName = cacheUrl.dynamicParams.get(i)
-				if (paramName) result += params[paramName]
+				if (paramName) result += pathParams[paramName]
 				else result += undefined
 			} else {
 				result += undefined

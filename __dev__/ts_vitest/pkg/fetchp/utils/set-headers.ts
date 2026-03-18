@@ -1,4 +1,4 @@
-import { FetchpParams } from '@pkg/fetchp/fetchp.type.ts'
+import type { FetchpParams } from '@pkg/fetchp/fetchp.type.ts'
 
 export function setHeadersContentType(init: RequestInit, params: FetchpParams) {
 	if (!params) return

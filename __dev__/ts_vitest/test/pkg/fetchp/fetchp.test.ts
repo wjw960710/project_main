@@ -2,19 +2,15 @@ import { vi } from 'vitest'
 import type { FetchpParams } from '@pkg/fetchp/fetchp.type.ts'
 import { transformUrl } from '@pkg/fetchp/utils/transform-url.ts'
 import { setHeaders, setHeadersContentType } from '@pkg/fetchp/utils/set-headers.ts'
+import { cacheCalls, mergeCall, mergeId } from '@pkg/fetchp/utils/merge-call.ts'
 
 describe('pkg fetchp', () => {
 	beforeEach(() => {
-		// Mock 全域 fetch 預設為 ok: true
 		vi.stubGlobal(
 			'fetch',
 			vi.fn(async () => {
-				return {
-					ok: true,
-					status: 200,
-					json: async () => ({ code: '200', data: { version: '1.0.0' } }),
-					headers: new Headers(),
-				}
+				await sleep(250)
+				return createBaseMockReturn()
 			}),
 		)
 	})
@@ -23,9 +19,53 @@ describe('pkg fetchp', () => {
 		vi.unstubAllGlobals()
 	})
 
-	it('隨便測測', async () => {
+	it('測試是否正確取得響應數值', async () => {
 		const res = await fetchp('{get}http://aaa.bbb')
 		expect(res.version).toBe('1.0.0')
+	})
+
+	it('測試連環調用是否會等待第一個響應結果', async () => {
+		let fetchCount = 0
+
+		vi.stubGlobal(
+			'fetch',
+			vi.fn(async () => {
+				fetchCount++
+				await sleep(Math.random() * 250 + 100)
+				return createBaseMockReturn()
+			}),
+		)
+
+		const res1 = await Promise.all(
+			Array(5)
+				.fill(0)
+				.map(() => fetchp('{get}http://aaa.bbb')),
+		)
+
+		expect(fetchCount).toBe(1)
+		expect(res1).toEqual(Array(5).fill({ version: '1.0.0' }))
+		expect(cacheCalls.get('gethttp://aaa.bbb')).toBeUndefined()
+
+		fetchp('{get}http://aaa.bbb')
+		await fetchp('{get}http://aaa.bbb')
+		expect(fetchCount).toBe(2)
+		await fetchp('{get}http://aaa.bbb')
+		expect(cacheCalls.size).toBe(0)
+		expect(fetchCount).toBe(3)
+
+		await fetchp('{get}http://aaa.bbb', { params: { id: 1, name: 'frank' } })
+		await fetchp('{get}http://aaa.bbb', { params: { id: 1, name: 'frank' } })
+		expect(cacheCalls.size).toBe(0)
+		expect(fetchCount).toBe(5)
+
+		await Promise.all([
+			fetchp('{get}http://aaa.bbb', { params: { id: 1, name: 'frank' } }),
+			fetchp('{get}http://aaa.bbb', { params: { id: 1, name: 'frank' } }),
+			fetchp('{get}http://aaa.bbb', { params: { id: 1, name: 'jeff' } }),
+			fetchp('{get}http://aaa.bbb'),
+		])
+		expect(cacheCalls.size).toBe(0)
+		expect(fetchCount).toBe(8)
 	})
 
 	it('驗證 setHeaders 相關函數是否正確', () => {
@@ -121,25 +161,43 @@ describe('pkg fetchp', () => {
 			cache: true,
 		})
 	})
-})
 
-async function fetchp(pUrl: string, params = {} as FetchpParams) {
-	const init: RequestInit = {}
-
-	const { method, url } = transformUrl(pUrl, params.params)
-	init.method = method
-	setHeadersContentType(init, params)
-
-	const res = await fetch(url, init)
-
-	return customResponse(res)
-}
-
-async function customResponse(res: Response) {
-	if (res.ok && res.status >= 200 && res.status < 300) {
-		const data = await res.json()
-		if (data.code === '200') return data.data
+	function createBaseMockReturn() {
+		return {
+			ok: true,
+			status: 200,
+			json: async () => {
+				await sleep(Math.random() * 250 + 100)
+				return { code: '200', data: { version: '1.0.0' } }
+			},
+			headers: new Headers(),
+		}
 	}
 
-	return false
-}
+	async function fetchp(pUrl: string, params = {} as FetchpParams) {
+		const init: RequestInit = {}
+		const { method, url } = transformUrl(pUrl, params.pathParams)
+		init.method = method
+
+		return mergeCall(mergeId(method, url, params.params), async () => {
+			setHeadersContentType(init, params)
+
+			const res = await fetch(url, init)
+
+			return customResponse(res)
+		})
+	}
+
+	async function customResponse(res: Response) {
+		if (res.ok && res.status >= 200 && res.status < 300) {
+			const data = await res.json()
+			if (data.code === '200') return data.data
+		}
+
+		return false
+	}
+
+	function sleep(timeout: number) {
+		return new Promise(resolve => setTimeout(resolve, timeout))
+	}
+})
