@@ -1,33 +1,18 @@
-export type FetchpMiddleware = (
-	req: { input: RequestInfo | URL; init?: RequestInit },
-	next: () => Promise<Response>,
-) => Promise<Response>
+export type CreateFetchpOptions = {
+	// 默認使用原生的 fetch，傳入的話就會換成對硬的請求函數
+	engine?: (input: string | URL | Request, init?: RequestInit) => Response | Promise<Response>
+	beforeFetch?: (input: string | URL | Request, init?: RequestInit) => Promise<void> // fetch 前執行
+	afterFetch?: (res: Response) => Response | Promise<Response> // fetch 後執行
+}
 
-export function createFetchp() {
-	const middlewares: FetchpMiddleware[] = []
+export function createFetchp(options?: CreateFetchpOptions) {
+	const { engine, beforeFetch, afterFetch } = options || {}
+	const _engine = engine || fetch
 
-	const fetchp = async (input: RequestInfo | URL, init?: RequestInit) => {
-		const dispatch = async (
-			i: number,
-			req: { input: RequestInfo | URL; init?: RequestInit },
-		): Promise<Response> => {
-			if (i === middlewares.length) {
-				// 最後一個中間件執行原生 fetch
-				return fetch(req.input, req.init)
-			}
-
-			const middleware = middlewares[i]
-			return middleware(req, () => dispatch(i + 1, req))
-		}
-
-		return dispatch(0, { input, init })
+	return async function (input: string | URL | Request, init?: RequestInit) {
+		if (beforeFetch) await beforeFetch(input, init)
+		const res = await _engine(input, init)
+		if (afterFetch) return afterFetch(res)
+		return res
 	}
-
-	// 允許動態添加中間件
-	fetchp.use = (fn: FetchpMiddleware) => {
-		middlewares.push(fn)
-		return fetchp
-	}
-
-	return fetchp
 }
