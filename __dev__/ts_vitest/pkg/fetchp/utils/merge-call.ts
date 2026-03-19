@@ -1,26 +1,28 @@
-import type { FetchpMergeCacheCalls, FetchpMergeId } from '@pkg/fetchp/fetchp.type.ts'
+import type {
+	FetchpMergeArg,
+	FetchpMergeCallCaches,
+	FetchpMergeCallOptions,
+} from '@pkg/fetchp/fetchp.type.ts'
 
-let cacheCalls: FetchpMergeCacheCalls | undefined
+let caches: FetchpMergeCallCaches | undefined
 
-export async function mergeCall<R>(
-	id: FetchpMergeId,
-	fn: () => Promise<R>,
-	pcacheCalls?: FetchpMergeCacheCalls,
-) {
-	const _cacheCalls = pcacheCalls || cacheCalls || (cacheCalls = new Map())
+export async function mergeCall<R = any>({
+	id,
+	call,
+	caches: pCaches,
+}: FetchpMergeCallOptions<R>): Promise<R> {
+	const _cacheCalls = pCaches || caches || (caches = new Map())
 
 	let cachePromise = _cacheCalls.get(id)
 	if (cachePromise) return cachePromise
 
-	_cacheCalls.set(id, (cachePromise = fn()))
+	_cacheCalls.set(id, (cachePromise = call()))
 	const res = await cachePromise
 	_cacheCalls.delete(id)
 	return res
 }
 
-export function mergeId(
-	...args: (undefined | null | string | number | Record<string, string | number>)[]
-) {
+export function mergeId(...args: FetchpMergeArg[]) {
 	let id = ''
 
 	for (let i = 0; i < args.length; i++) {

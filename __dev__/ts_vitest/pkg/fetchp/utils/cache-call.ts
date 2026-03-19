@@ -1,14 +1,14 @@
-import { FetchpCacheId, FetchpCacheResponses } from '@pkg/fetchp/fetchp.type.ts'
+import { FetchpCacheCallCaches, FetchpCacheCallOptions } from '@pkg/fetchp/fetchp.type.ts'
 
-let cacheResponses: FetchpCacheResponses | undefined
+let caches: FetchpCacheCallCaches | undefined
 
-export async function cacheCall<R>(
-	id: FetchpCacheId,
-	fn: () => Promise<R>,
-	beforeCache?: (res: R) => Promise<boolean> | boolean,
-	pcacheResponses?: FetchpCacheResponses,
-) {
-	const _cacheResponses = pcacheResponses || cacheResponses || (cacheResponses = new Map())
+export async function cacheCall<R = any>({
+	id,
+	call: fn,
+	beforeCache,
+	caches: pCaches,
+}: FetchpCacheCallOptions<R>): Promise<R> {
+	const _cacheResponses = pCaches || caches || (caches = new Map())
 
 	const cacheRes = _cacheResponses.get(id)
 	if (cacheRes) return cacheRes

@@ -1,25 +1,26 @@
-import type {
-	FetchpCacheUrl,
-	FetchpCacheUrls,
-	FetchpUrlTransform,
+import {
+	FetchpTransformUrlCacheItem,
+	FetchpTransformUrlCaches,
+	FetchpTransformUrlOptions,
+	FetchpTransformUrlResult,
 } from '@pkg/fetchp/fetchp.type.ts'
 
-let cacheUrls: FetchpCacheUrls | undefined
+let caches: FetchpTransformUrlCaches | undefined
 
 // 格式參考 {get}/api/user/{id}
 //         {post}/api/user/detail
-export function transformUrl(
-	url: string,
-	pathParams?: Record<string, string>,
-	pcacheUrls?: FetchpCacheUrls,
-): FetchpUrlTransform {
-	const _cacheUrls = pcacheUrls || cacheUrls || (cacheUrls = new Map())
-	let cacheUrl = _cacheUrls.get(url) as FetchpCacheUrl
+export function transformUrl({
+	url,
+	pathParams,
+	caches: pCaches,
+}: FetchpTransformUrlOptions): FetchpTransformUrlResult {
+	const _cacheUrls = pCaches || caches || (caches = new Map())
+	let cacheUrl = _cacheUrls.get(url) as FetchpTransformUrlCacheItem
 
 	if (!cacheUrl) {
 		const _cacheUrl = {
 			urls: [] as (string | undefined)[],
-		} as FetchpCacheUrl
+		} as FetchpTransformUrlCacheItem
 
 		let prev = ''
 		for (let i = 0; i < url.length; i++) {
