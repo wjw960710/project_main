@@ -1,5 +1,6 @@
 import { vi } from 'vitest'
 import {
+	FetchpCacheResponses,
 	type FetchpCacheUrls,
 	FetchpMergeCacheCalls,
 	FetchpParams,
@@ -7,6 +8,7 @@ import {
 import { transformUrl } from '@pkg/fetchp/utils/transform-url.ts'
 import { setHeaders, setHeadersContentType } from '@pkg/fetchp/utils/set-headers.ts'
 import { mergeCall, mergeId } from '@pkg/fetchp/utils/merge-call.ts'
+import { cacheCall } from '@pkg/fetchp/utils/cache-call.ts'
 
 const cacheCalls: FetchpMergeCacheCalls = new Map()
 
@@ -28,6 +30,40 @@ describe('pkg fetchp', () => {
 	it('測試是否正確取得響應數值', async () => {
 		const res = await fetchp('{get}http://aaa.bbb')
 		expect(res.version).toBe('1.0.0')
+	})
+
+	it('測試緩存響應', async () => {
+		let fetchCount = 0
+		vi.stubGlobal(
+			'fetch',
+			vi.fn(async () => {
+				fetchCount++
+				await sleep(250)
+				return createBaseMockReturn()
+			}),
+		)
+
+		const cacheResponses: FetchpCacheResponses = new Map()
+		const res = await fetchp('{get}http://aaa.bbb')
+		const res2 = await fetchp('{get}http://aaa.bbb')
+		expect(res.version).toBe('1.0.0')
+		expect(fetchCount).toBe(1)
+		expect(cacheResponses.size).toBe(1)
+
+		async function fetchp(pUrl: string, params = {} as FetchpParams) {
+			const init: RequestInit = {}
+			const { method, url } = transformUrl(pUrl, params.pathParams)
+			init.method = method
+
+			const id = mergeId(method, url, params.params)
+			const apiCall = async () => {
+				setHeadersContentType(init, params)
+				const res = await fetch(url, init)
+				return customResponse(res)
+			}
+
+			return cacheCall(id, apiCall, res => res !== false, cacheResponses)
+		}
 	})
 
 	it('測試連環調用是否會等待第一個響應結果', async () => {
@@ -189,16 +225,17 @@ describe('pkg fetchp', () => {
 		const { method, url } = transformUrl(pUrl, params.pathParams)
 		init.method = method
 
-		return mergeCall(
-			mergeId(method, url, params.params),
-			async () => {
-				setHeadersContentType(init, params)
+		const id = mergeId(method, url, params.params)
+		const apiCall = async () => {
+			setHeadersContentType(init, params)
+			const res = await fetch(url, init)
+			return customResponse(res)
+		}
 
-				const res = await fetch(url, init)
-
-				return customResponse(res)
-			},
-			cacheCalls,
+		return cacheCall(
+			id,
+			() => mergeCall(id, apiCall, cacheCalls),
+			res => res !== false,
 		)
 	}
 

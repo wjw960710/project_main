@@ -23,3 +23,7 @@ export type FetchpUrlTransform = {
 // merge-call.ts
 export type FetchpMergeCacheCalls = Map<FetchpMergeId, Promise<any>>
 export type FetchpMergeId = string | number | symbol
+
+// cache-call.ts
+export type FetchpCacheResponses = Map<FetchpMergeId, any>
+export type FetchpCacheId = FetchpMergeId
