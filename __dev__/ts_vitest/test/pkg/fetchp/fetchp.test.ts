@@ -16,7 +16,7 @@ describe('pkg fetchp', () => {
 			'fetch',
 			vi.fn(async () => {
 				await sleep(250)
-				return createBaseMockReturn()
+				return createBaseMockSuccessResponse()
 			}),
 		)
 	})
@@ -26,6 +26,7 @@ describe('pkg fetchp', () => {
 	})
 
 	it('全整合測試', async () => {
+		// TODO FetchpParams, cancel 機制
 		async function fetchp(pUrl: string, params = {} as FetchpParams) {
 			const init: RequestInit = {}
 			const { method, url } = transformUrl({
@@ -48,7 +49,7 @@ describe('pkg fetchp', () => {
 			return cacheCall({
 				id,
 				call: apiCall,
-				beforeCache: res => res !== false,
+				ignoreCache: res => res !== false,
 			})
 		}
 	})
@@ -58,14 +59,26 @@ describe('pkg fetchp', () => {
 
 		vi.stubGlobal(
 			'fetch',
-			vi.fn(async () => {
+			vi.fn(async (input: string) => {
 				fetchCount++
 				await sleep(250)
-				return createBaseMockReturn()
+				if (input === '1') return createBaseMockSuccessResponse()
+				return createBaseMockFailResponse()
 			}),
 		)
 
-		async function fetchp(input: string, params: Record<string, string | number> = {}) {
+		async function fetchp(
+			input: string,
+			{
+				params,
+				updateCache,
+				remove,
+			}: {
+				params?: Record<string, string | number>
+				updateCache?: (res: any) => boolean
+				remove?: boolean
+			} = {},
+		) {
 			const id = mergeId(input, params)
 			const apiCall = async () => {
 				const res = await fetch(input)
@@ -75,17 +88,43 @@ describe('pkg fetchp', () => {
 			return cacheCall({
 				id,
 				call: apiCall,
-				beforeCache: res => res !== false,
 				caches,
+				ignoreCache: res => res !== false,
+				updateCache,
+				remove,
 			})
 		}
 
 		const caches: FetchpCacheCallCaches = new Map()
-		const res = await fetchp('{get}http://aaa.bbb')
-		const res2 = await fetchp('{get}http://aaa.bbb')
+		const res = await fetchp('1')
+		await fetchp('1')
 		expect(res.version).toBe('1.0.0')
 		expect(fetchCount).toBe(1)
 		expect(caches.size).toBe(1)
+
+		const res2 = await fetchp('1', {
+			updateCache: res => ({ ...res, version: '2.0.0' }),
+		})
+		expect(res2.version).toBe('2.0.0')
+		expect(fetchCount).toBe(1)
+		expect(caches.size).toBe(1)
+
+		const res3 = await fetchp('1')
+		expect(res3.version).toBe('2.0.0')
+		expect(fetchCount).toBe(1)
+		expect(caches.size).toBe(1)
+
+		const res4 = await fetchp('1', { remove: true })
+		await fetchp('1', { params: { id: 1 }, remove: true })
+		expect(res4.version).toBe('1.0.0')
+		expect(fetchCount).toBe(3)
+		expect(caches.size).toBe(2)
+
+		const [res5, res5_2] = await Promise.all([fetchp('2'), fetchp('2')])
+		expect(res5.version).toBeUndefined()
+		expect(res5_2).toBe(false)
+		expect(fetchCount).toBe(5)
+		expect(caches.size).toBe(2)
 	})
 
 	it('測試連環調用是否會等待第一個響應結果', async () => {
@@ -96,7 +135,7 @@ describe('pkg fetchp', () => {
 			vi.fn(async () => {
 				fetchCount++
 				await sleep(Math.random() * 250 + 100)
-				return createBaseMockReturn()
+				return createBaseMockSuccessResponse()
 			}),
 		)
 
@@ -277,12 +316,23 @@ describe('pkg fetchp', () => {
 		expect(caches.size).toBe(5)
 	})
 
-	function createBaseMockReturn() {
+	function createBaseMockSuccessResponse() {
 		return {
 			ok: true,
 			status: 200,
 			json: async () => {
 				return { code: '200', data: { version: '1.0.0' } }
+			},
+			headers: new Headers(),
+		}
+	}
+
+	function createBaseMockFailResponse() {
+		return {
+			ok: false,
+			status: 500,
+			json: async () => {
+				return { code: '500', data: null }
 			},
 			headers: new Headers(),
 		}

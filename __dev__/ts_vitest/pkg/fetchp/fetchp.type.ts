@@ -42,10 +42,14 @@ export type FetchpMergeCallOptions<R = any> = {
 
 // cache-call.ts
 export type FetchpCacheId = FetchpMergeId
-export type FetchpCacheCallCaches = Map<FetchpMergeId, any>
+export type FetchpCacheCallCaches = Map<FetchpCacheId, any>
 export type FetchpCacheCallOptions<R = any> = {
-	id: FetchpMergeId
+	id: FetchpCacheId
 	call: () => Promise<R>
-	beforeCache?: (res: R) => Promise<boolean> | boolean
 	caches?: FetchpCacheCallCaches
+	ignoreCache?: (res: R) => Promise<boolean> | boolean
+	// 有 cache 才會觸發 update 更新
+	updateCache?: (res: R) => Promise<R> | R
+	// 清除緩存並重新拉取
+	remove?: boolean
 }
