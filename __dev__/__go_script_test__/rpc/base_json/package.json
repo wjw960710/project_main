@@ -1,0 +1,6 @@
+{
+  "scripts": {
+    "run": "node ./client.js"
+  },
+  "type": "module"
+}
