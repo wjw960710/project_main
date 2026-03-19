@@ -4,7 +4,7 @@ import type {
 	FetchpUrlTransform,
 } from '@pkg/fetchp/fetchp.type.ts'
 
-const cacheUrls: FetchpCacheUrls = new Map()
+let cacheUrls: FetchpCacheUrls | undefined
 
 // 格式參考 {get}/api/user/{id}
 //         {post}/api/user/detail
@@ -13,7 +13,7 @@ export function transformUrl(
 	pathParams?: Record<string, string>,
 	pcacheUrls?: FetchpCacheUrls,
 ): FetchpUrlTransform {
-	const _cacheUrls = pcacheUrls || cacheUrls
+	const _cacheUrls = pcacheUrls || cacheUrls || (cacheUrls = new Map())
 	let cacheUrl = _cacheUrls.get(url) as FetchpCacheUrl
 
 	if (!cacheUrl) {
