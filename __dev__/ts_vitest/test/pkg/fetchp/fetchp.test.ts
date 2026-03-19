@@ -10,8 +10,6 @@ import { setHeaders, setHeadersContentType } from '@pkg/fetchp/utils/set-headers
 import { mergeCall, mergeId } from '@pkg/fetchp/utils/merge-call.ts'
 import { cacheCall } from '@pkg/fetchp/utils/cache-call.ts'
 
-const cacheCalls: FetchpMergeCacheCalls = new Map()
-
 describe('pkg fetchp', () => {
 	beforeEach(() => {
 		vi.stubGlobal(
@@ -27,29 +25,7 @@ describe('pkg fetchp', () => {
 		vi.unstubAllGlobals()
 	})
 
-	it('測試是否正確取得響應數值', async () => {
-		const res = await fetchp('{get}http://aaa.bbb')
-		expect(res.version).toBe('1.0.0')
-	})
-
-	it('測試緩存響應', async () => {
-		let fetchCount = 0
-		vi.stubGlobal(
-			'fetch',
-			vi.fn(async () => {
-				fetchCount++
-				await sleep(250)
-				return createBaseMockReturn()
-			}),
-		)
-
-		const cacheResponses: FetchpCacheResponses = new Map()
-		const res = await fetchp('{get}http://aaa.bbb')
-		const res2 = await fetchp('{get}http://aaa.bbb')
-		expect(res.version).toBe('1.0.0')
-		expect(fetchCount).toBe(1)
-		expect(cacheResponses.size).toBe(1)
-
+	it('全整合測試', async () => {
 		async function fetchp(pUrl: string, params = {} as FetchpParams) {
 			const init: RequestInit = {}
 			const { method, url } = transformUrl(pUrl, params.pathParams)
@@ -62,8 +38,42 @@ describe('pkg fetchp', () => {
 				return customResponse(res)
 			}
 
+			return cacheCall(
+				id,
+				() => mergeCall(id, apiCall),
+				res => res !== false,
+			)
+		}
+	})
+
+	it('測試緩存響應', async () => {
+		let fetchCount = 0
+
+		vi.stubGlobal(
+			'fetch',
+			vi.fn(async () => {
+				fetchCount++
+				await sleep(250)
+				return createBaseMockReturn()
+			}),
+		)
+
+		async function fetchp(input: string, params: Record<string, string | number> = {}) {
+			const id = mergeId(input, params)
+			const apiCall = async () => {
+				const res = await fetch(input)
+				return customResponse(res)
+			}
+
 			return cacheCall(id, apiCall, res => res !== false, cacheResponses)
 		}
+
+		const cacheResponses: FetchpCacheResponses = new Map()
+		const res = await fetchp('{get}http://aaa.bbb')
+		const res2 = await fetchp('{get}http://aaa.bbb')
+		expect(res.version).toBe('1.0.0')
+		expect(fetchCount).toBe(1)
+		expect(cacheResponses.size).toBe(1)
 	})
 
 	it('測試連環調用是否會等待第一個響應結果', async () => {
@@ -77,6 +87,17 @@ describe('pkg fetchp', () => {
 				return createBaseMockReturn()
 			}),
 		)
+
+		const cacheCalls: FetchpMergeCacheCalls = new Map()
+		async function fetchp(input: string, params: Record<string, string | number> = {}) {
+			const id = mergeId(input, params)
+			const apiCall = async () => {
+				const res = await fetch(input)
+				return customResponse(res)
+			}
+
+			return mergeCall(id, apiCall, cacheCalls)
+		}
 
 		const res1 = await Promise.all(
 			Array(5)
@@ -95,15 +116,15 @@ describe('pkg fetchp', () => {
 		expect(cacheCalls.size).toBe(0)
 		expect(fetchCount).toBe(3)
 
-		await fetchp('{get}http://aaa.bbb', { params: { id: 1, name: 'frank' } })
-		await fetchp('{get}http://aaa.bbb', { params: { id: 1, name: 'frank' } })
+		await fetchp('{get}http://aaa.bbb', { id: 1, name: 'frank' })
+		await fetchp('{get}http://aaa.bbb', { id: 1, name: 'frank' })
 		expect(cacheCalls.size).toBe(0)
 		expect(fetchCount).toBe(5)
 
 		await Promise.all([
-			fetchp('{get}http://aaa.bbb', { params: { id: 1, name: 'frank' } }),
-			fetchp('{get}http://aaa.bbb', { params: { id: 1, name: 'frank' } }),
-			fetchp('{get}http://aaa.bbb', { params: { id: 1, name: 'jeff' } }),
+			fetchp('{get}http://aaa.bbb', { id: 1, name: 'frank' }),
+			fetchp('{get}http://aaa.bbb', { id: 1, name: 'frank' }),
+			fetchp('{get}http://aaa.bbb', { id: 1, name: 'jeff' }),
 			fetchp('{get}http://aaa.bbb'),
 		])
 		expect(cacheCalls.size).toBe(0)
@@ -213,30 +234,10 @@ describe('pkg fetchp', () => {
 			ok: true,
 			status: 200,
 			json: async () => {
-				await sleep(Math.random() * 250 + 100)
 				return { code: '200', data: { version: '1.0.0' } }
 			},
 			headers: new Headers(),
 		}
-	}
-
-	async function fetchp(pUrl: string, params = {} as FetchpParams) {
-		const init: RequestInit = {}
-		const { method, url } = transformUrl(pUrl, params.pathParams)
-		init.method = method
-
-		const id = mergeId(method, url, params.params)
-		const apiCall = async () => {
-			setHeadersContentType(init, params)
-			const res = await fetch(url, init)
-			return customResponse(res)
-		}
-
-		return cacheCall(
-			id,
-			() => mergeCall(id, apiCall, cacheCalls),
-			res => res !== false,
-		)
 	}
 
 	async function customResponse(res: Response) {
