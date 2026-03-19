@@ -2,6 +2,7 @@ import { FetchpCacheCallCaches, FetchpCacheCallOptions } from '@pkg/fetchp/fetch
 
 let caches: FetchpCacheCallCaches | undefined
 
+// TODO 清除緩存與更新緩存機制
 export async function cacheCall<R = any>({
 	id,
 	call: fn,
