@@ -1,8 +1,14 @@
 import { vi } from 'vitest'
-import type { FetchpParams } from '@pkg/fetchp/fetchp.type.ts'
+import {
+	type FetchpCacheUrls,
+	FetchpMergeCacheCalls,
+	FetchpParams,
+} from '@pkg/fetchp/fetchp.type.ts'
 import { transformUrl } from '@pkg/fetchp/utils/transform-url.ts'
 import { setHeaders, setHeadersContentType } from '@pkg/fetchp/utils/set-headers.ts'
-import { cacheCalls, mergeCall, mergeId } from '@pkg/fetchp/utils/merge-call.ts'
+import { mergeCall, mergeId } from '@pkg/fetchp/utils/merge-call.ts'
+
+const cacheCalls: FetchpMergeCacheCalls = new Map()
 
 describe('pkg fetchp', () => {
 	beforeEach(() => {
@@ -109,57 +115,61 @@ describe('pkg fetchp', () => {
 	})
 
 	it('驗證 URL 轉換是否正確', () => {
-		expect(transformUrl('{get/api/user')).toEqual({
+		const cacheUrls: FetchpCacheUrls = new Map()
+
+		expect(cacheUrls.get('{get/api/user')).toBeUndefined()
+		expect(transformUrl('{get/api/user', undefined, cacheUrls)).toEqual({
 			method: 'get',
 			url: '',
-			cache: false,
 		})
+		expect(cacheUrls.get('{get/api/user')).toBeDefined()
 
-		expect(transformUrl('{get/api/user')).toEqual({
+		expect(transformUrl('{get/api/user', undefined, cacheUrls)).toEqual({
 			method: 'get',
 			url: '',
-			cache: true,
 		})
 
-		expect(transformUrl('{get/api/user', { 'get/api/user': '123' })).toEqual({
+		expect(transformUrl('{get/api/user', { 'get/api/user': '123' }, cacheUrls)).toEqual({
 			method: 'get',
 			url: '',
-			cache: true,
 		})
 
-		expect(transformUrl('{get}/api/user')).toEqual({
+		expect(transformUrl('{get}/api/user', undefined, cacheUrls)).toEqual({
 			method: 'get',
 			url: '/api/user',
-			cache: false,
 		})
 
-		expect(transformUrl('{get}/api/user/{id}')).toEqual({
+		expect(transformUrl('{get}/api/user/{id}', undefined, cacheUrls)).toEqual({
 			method: 'get',
 			url: '/api/user/undefined',
-			cache: false,
 		})
 
-		expect(transformUrl('{get}/api/user/{id}', { id: '123' })).toEqual({
-			method: 'get',
+		expect(cacheUrls.get('{get}/api/user/{id}')).toBeDefined()
+		expect(transformUrl('{post}/api/user/{id}', { id: '123' }, cacheUrls)).toEqual({
+			method: 'post',
 			url: '/api/user/123',
-			cache: true,
 		})
+		expect(cacheUrls.get('{post}/api/user/{id}')).toBeDefined()
 
 		expect(
-			transformUrl('{get}/api/user/{id}/job/{name}', { id: '123', name: 'frank' }),
+			transformUrl('{get}/api/user/{id}/job/{name}', { id: '123', name: 'frank' }, cacheUrls),
 		).toEqual({
 			method: 'get',
 			url: '/api/user/123/job/frank',
-			cache: false,
 		})
 
 		expect(
-			transformUrl('{get}/api/user/{id}/job/{name}', { hello: '123', name: 'frank' }),
+			transformUrl(
+				'{get}/api/user/{id}/job/{name}',
+				{ hello: '123', name: 'frank' },
+				cacheUrls,
+			),
 		).toEqual({
 			method: 'get',
 			url: '/api/user/undefined/job/frank',
-			cache: true,
 		})
+
+		expect(cacheUrls.size).toBe(5)
 	})
 
 	function createBaseMockReturn() {
@@ -179,13 +189,17 @@ describe('pkg fetchp', () => {
 		const { method, url } = transformUrl(pUrl, params.pathParams)
 		init.method = method
 
-		return mergeCall(mergeId(method, url, params.params), async () => {
-			setHeadersContentType(init, params)
+		return mergeCall(
+			mergeId(method, url, params.params),
+			async () => {
+				setHeadersContentType(init, params)
 
-			const res = await fetch(url, init)
+				const res = await fetch(url, init)
 
-			return customResponse(res)
-		})
+				return customResponse(res)
+			},
+			cacheCalls,
+		)
 	}
 
 	async function customResponse(res: Response) {

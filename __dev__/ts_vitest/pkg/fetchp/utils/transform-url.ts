@@ -1,26 +1,25 @@
-import type { FetchpUrlTransform } from '@pkg/fetchp/fetchp.type.ts'
+import type {
+	FetchpCacheUrl,
+	FetchpCacheUrls,
+	FetchpUrlTransform,
+} from '@pkg/fetchp/fetchp.type.ts'
 
-type CacheUrl = {
-	method: string
-	urls: (string | undefined)[]
-	dynamicParams?: Map<number, string>
-}
-
-const cacheUrls = new Map<string, CacheUrl>()
+const cacheUrls: FetchpCacheUrls = new Map()
 
 // 格式參考 {get}/api/user/{id}
 //         {post}/api/user/detail
 export function transformUrl(
 	url: string,
 	pathParams?: Record<string, string>,
+	pcacheUrls?: FetchpCacheUrls,
 ): FetchpUrlTransform {
-	let cacheUrl = cacheUrls.get(url) as CacheUrl
-	let isCache = !!cacheUrl
+	const _cacheUrls = pcacheUrls || cacheUrls
+	let cacheUrl = _cacheUrls.get(url) as FetchpCacheUrl
 
 	if (!cacheUrl) {
 		const _cacheUrl = {
 			urls: [] as (string | undefined)[],
-		} as CacheUrl
+		} as FetchpCacheUrl
 
 		let prev = ''
 		for (let i = 0; i < url.length; i++) {
@@ -55,31 +54,35 @@ export function transformUrl(
 		}
 
 		if (!_cacheUrl.urls.length && _cacheUrl.method) _cacheUrl.urls.push(prev)
-		cacheUrls.set(url, (cacheUrl = _cacheUrl))
+		if (!_cacheUrl.dynamicParams) _cacheUrl.url = _cacheUrl.urls.join('')
+		_cacheUrls.set(url, (cacheUrl = _cacheUrl))
 	}
 
 	let result = ''
-	for (let i = 0; i < cacheUrl.urls.length; i++) {
-		const e = cacheUrl.urls[i]
+	if (cacheUrl.url != null) {
+		result = cacheUrl.url
+	} else {
+		for (let i = 0; i < cacheUrl.urls.length; i++) {
+			const e = cacheUrl.urls[i]
 
-		if (!e) {
-			if (pathParams && cacheUrl.dynamicParams) {
-				const paramName = cacheUrl.dynamicParams.get(i)
-				if (paramName) result += pathParams[paramName]
-				else result += undefined
-			} else {
-				result += undefined
+			if (!e) {
+				if (pathParams && cacheUrl.dynamicParams) {
+					const paramName = cacheUrl.dynamicParams.get(i)
+					if (paramName) result += pathParams[paramName]
+					else result += undefined
+				} else {
+					result += undefined
+				}
+
+				continue
 			}
 
-			continue
+			result += cacheUrl.urls[i]
 		}
-
-		result += cacheUrl.urls[i]
 	}
 
 	return {
 		method: cacheUrl.method || 'get',
 		url: result,
-		cache: isCache,
 	}
 }
