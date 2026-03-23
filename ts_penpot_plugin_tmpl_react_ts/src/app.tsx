@@ -5,12 +5,18 @@ export function App() {
 	const [msgCount, setMsgCount] = useState(count)
 
 	useEffect(() => {
-		window.addEventListener('message', (event: MessageEvent<UiMessage<MessageType>>) => {
+		window.addEventListener('message', onMessage)
+
+		return () => {
+			window.removeEventListener('message', onMessage)
+		}
+
+		function onMessage(event: MessageEvent<UiMessage<MessageType>>) {
 			const msg = event.data
 			if (msg.type === 'COUNT') {
 				setMsgCount(msg.data)
 			}
-		})
+		}
 	}, [])
 
 	function updateCount() {
