@@ -6,7 +6,15 @@ export function App() {
 	const [groupLibComponents, setGroupLibComponents] = useState<UiGroupLibComponent[]>([])
 
 	useEffect(() => {
-		window.addEventListener('message', (event: MessageEvent<UiMessage<MessageType>>) => {
+		window.addEventListener('message', onMessage)
+
+		snedMessage('GET_GROUP_LIB_COMPONENTS')
+
+		return () => {
+			window.removeEventListener('message', onMessage)
+		}
+
+		function onMessage(event: MessageEvent<UiMessage<MessageType>>) {
 			const msg = event.data
 
 			if (msg.type === 'GET_GROUP_LIB_COMPONENTS') {
@@ -38,9 +46,7 @@ export function App() {
 					downloadUint8Array(exportData.file, `${exportData.name}.png`, 'image/png')
 				}
 			}
-		})
-
-		snedMessage('GET_GROUP_LIB_COMPONENTS')
+		}
 	}, [])
 
 	function handleDownload(ids: [string, string]) {

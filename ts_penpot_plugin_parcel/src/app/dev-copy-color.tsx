@@ -157,15 +157,21 @@ export function App() {
 	}, [unoColorGroupList, resultSearchState])
 
 	useEffect(() => {
-		window.addEventListener('message', (event: MessageEvent<UiMessage<MessageType>>) => {
+		window.addEventListener('message', onMessage)
+
+		snedMessage('GET_CONNECTED_COLORS')
+
+		return () => {
+			window.removeEventListener('message', onMessage)
+		}
+
+		function onMessage(event: MessageEvent<UiMessage<MessageType>>) {
 			const msg = event.data
 
 			if (msg.type === 'GET_CONNECTED_COLORS') {
 				setGroupLibColors(msg.data)
 			}
-		})
-
-		snedMessage('GET_CONNECTED_COLORS')
+		}
 	}, [])
 
 	useEffect(() => {

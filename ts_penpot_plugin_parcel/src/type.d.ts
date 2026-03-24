@@ -4,6 +4,9 @@ type MessageType =
 	| 'GET_GROUP_LIB_COMPONENTS' // 取得元件列表
 	| 'EXPORT' // 取得導出數據
 	| 'REPLACE_COLOR' // 替換形狀顏色
+	| 'SELECTION_CHANGE' // penpot 事件傳遞
+	| 'SELECTION_FLAT_INFO' // 取得 selection 的扁平化訊息
+	| 'CREATE_LIB_COLOR' // 新增資源顏色
 
 type UiLibComp = Pick<
 	import('@penpot/plugin-types').LibraryComponent,
@@ -23,6 +26,15 @@ type UiMsgExportData = {
 	}[]
 }
 
+type UiMsgSelectionData = {
+	ids: string[]
+	shapes: import('@penpot/plugin-types').Shape[]
+}
+
+type UiMsgSelectionFlatInfoData = {
+	shapes: import('@penpot/plugin-types').Shape[]
+}
+
 type GroupLibComponent<Child extends UiLibComp> = {
 	id: string
 	name: string
@@ -36,6 +48,8 @@ type PluginGroupLibComponent = GroupLibComponent<
 >
 
 type PenpotReplaceShapeColorLocation = 'fill' | 'stroke'
+
+type PenpotColorStop = { color: string; opacity?: number; offset: number }
 
 // prettier-ignore
 type PenpotMessage<T extends MessageType> =
@@ -52,6 +66,14 @@ type PenpotMessage<T extends MessageType> =
 				location: PenpotReplaceShapeColorLocation
 			}
 		}
+	: T extends 'CREATE_LIB_COLOR'
+		? {
+			type: T
+			data: {
+				name: string
+				color: import('@penpot/plugin-types').Fill | import('@penpot/plugin-types').Stroke | import('@penpot/plugin-types').Shadow
+			}
+		}
 		: { type: T; data: undefined }
 
 // prettier-ignore
@@ -64,4 +86,8 @@ type UiMessage<T extends MessageType> =
 		? { type: T; data: UiGroupLibComponent[] }
 	: T extends 'EXPORT'
 		? { type: T; data: UiMsgExportData }
+	: T extends 'SELECTION_CHANGE'
+		? { type: T; data: UiMsgSelectionData }
+	: T extends 'SELECTION_FLAT_INFO'
+		? { type: T; data: UiMsgSelectionFlatInfoData }
 	: { type: T; data: undefined }

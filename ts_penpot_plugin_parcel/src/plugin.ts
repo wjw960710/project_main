@@ -1,5 +1,5 @@
 import { MAP_LIB_GROUP_NAME, MAP_NAME } from '@/constant/color-copy.ts'
-import type { Fill, LibraryColor, Shape, Stroke } from '@penpot/plugin-types'
+import type { Fill, LibraryColor, Shadow, Shape, Stroke } from '@penpot/plugin-types'
 import { name as manifestName } from '../public/manifest.json'
 import { version as pkgVersion } from '../package.json'
 
@@ -11,8 +11,16 @@ penpot.ui.open(
 	{
 		width: 375,
 		height: penpot.viewport.bounds.height,
+		// height: 375,
 	},
 )
+
+penpot.on('selectionchange', event => {
+	sendMessage('SELECTION_CHANGE', {
+		ids: event,
+		shapes: penpot.selection,
+	})
+})
 
 const globalState = {
 	groupLibComponents: [] as PluginGroupLibComponent[],
@@ -82,6 +90,51 @@ penpot.ui.onMessage(async (message: PenpotMessage<MessageType>) => {
 		sendMessage(msg.type, res)
 	} else if (msg.type === 'REPLACE_COLOR') {
 		recursiveChangeColor(msg.data.color, msg.data.location, penpot.selection)
+	} else if (msg.type === 'SELECTION_FLAT_INFO') {
+		const shapes: Shape[] = []
+		recursiveSetShape(penpot.selection, shapes)
+		sendMessage('SELECTION_FLAT_INFO', {
+			shapes,
+		})
+	} else if (msg.type === 'CREATE_LIB_COLOR') {
+		const newColor = penpot.library.local.createColor()
+		let { name, color } = msg.data
+		newColor.name = name
+		if ((color as Fill)?.fillColor || (color as Fill)?.fillColorGradient) {
+			color = color as Fill
+			// TODO 漸層加入、色號替換
+			if (color.fillColorGradient) {
+				console.log(newColor)
+				console.log(color.fillColorGradient)
+				// newColor.color = null
+				// newColor.opacity = null
+				newColor.gradient = {
+					...color.fillColorGradient,
+					stops: [],
+				}
+				// for (let key in color.fillColorGradient) {
+				// 	console.log(key, color.fillColorGradient[key])
+				// 	newColor.gradient[key] = color.fillColorGradient[key]
+				// }
+				return
+			}
+
+			if (color.fillColor != null) newColor.color = color.fillColor
+			if (color.fillOpacity != null) newColor.opacity = color.fillOpacity
+		} else if ((color as Stroke)?.strokeColor || (color as Stroke)?.strokeColorGradient) {
+			color = color as Stroke
+			if (color.strokeColorGradient) {
+				newColor.gradient = color.strokeColorGradient
+				return
+			}
+
+			if (color.strokeColor != null) newColor.color = color.strokeColor
+			if (color.strokeOpacity != null) newColor.opacity = color.strokeOpacity
+		} else if ((color as Shadow)?.style) {
+			color = color as Shadow
+			if (color.color?.color != null) newColor.color = color.color.color
+			if (color.color?.opacity != null) newColor.opacity = color.color.opacity
+		}
 	}
 })
 
@@ -96,6 +149,16 @@ function sendMessage<T extends MessageType>(
 	penpot.ui.sendMessage({
 		type,
 		data: (args as any[])[0],
+	})
+}
+
+function recursiveSetShape(shapes: Shape[], result = [] as Shape[]) {
+	shapes.forEach(shape => {
+		if (penpot.utils.types.isGroup(shape)) {
+			recursiveSetShape(shape.children, result)
+		} else {
+			result.push(shape)
+		}
 	})
 }
 
