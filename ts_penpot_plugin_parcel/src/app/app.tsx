@@ -2,6 +2,7 @@ import { App as CopyColorApp } from '@/app/dev-copy-color.tsx'
 import { App as ResourcesDownloaderApp } from '@/app/dev-resources-downloader.tsx'
 import { App as UIColourManagerApp } from '@/app/ui-color-manager.tsx'
 import { App as UIColourAddApp } from '@/app/ui-color-add.tsx'
+import { App as UIColourChangeApp } from '@/app/ui-color-change.tsx'
 import { Tabs, TabsList, TabsTrigger } from '@/shadcn-official/component-ui/tabs.tsx'
 import { type FC, useMemo, useState } from 'react'
 import { MdComputer, MdDesignServices } from 'react-icons/md'
@@ -45,12 +46,15 @@ let tabList: DeptTab[] = [
 			{
 				key: 'colorManager',
 				name: '顏色管理',
-				// experimental: true,
 			},
 			{
 				key: 'colorAdd',
 				name: '顏色添加',
 				experimental: true,
+			},
+			{
+				key: 'colorChange',
+				name: '色號替換',
 			},
 		],
 	},
@@ -72,6 +76,7 @@ export function App() {
 		if (deptKey === 'ui') {
 			if (appKey === 'colorManager') return <UIColourManagerApp />
 			if (appKey === 'colorAdd') return <UIColourAddApp />
+			if (appKey === 'colorChange') return <UIColourChangeApp />
 		}
 
 		if (deptKey === 'dev') {

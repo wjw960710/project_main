@@ -1,12 +1,14 @@
 type MessageType =
 	| 'GET_LOCAL_COLORS' // 取得本地顏色資源
-	| 'GET_CONNECTED_COLORS' // 取得該檔按所有關聯的顏色資源
+	| 'GET_CONNECTED_COLORS' // 取得該檔案所有關聯的顏色資源
 	| 'GET_GROUP_LIB_COMPONENTS' // 取得元件列表
 	| 'EXPORT' // 取得導出數據
 	| 'REPLACE_COLOR' // 替換形狀顏色
 	| 'SELECTION_CHANGE' // penpot 事件傳遞
 	| 'SELECTION_FLAT_INFO' // 取得 selection 的扁平化訊息
 	| 'CREATE_LIB_COLOR' // 新增資源顏色
+	| 'CHANGE_ALL_ITEM_COLOR' // 切換所有元素顏色
+	| 'GET_CONNECTED_COLORS2' // 取得該檔案所有關聯的顏色資源
 
 type UiLibComp = Pick<
 	import('@penpot/plugin-types').LibraryComponent,
@@ -51,6 +53,12 @@ type PenpotReplaceShapeColorLocation = 'fill' | 'stroke'
 
 type PenpotColorStop = { color: string; opacity?: number; offset: number }
 
+type UiConnectedColor = {
+	id: string
+	name: string
+	colors: import('@penpot/plugin-types').LibraryColor[]
+}
+
 // prettier-ignore
 type PenpotMessage<T extends MessageType> =
 	T extends 'EXPORT'
@@ -74,6 +82,14 @@ type PenpotMessage<T extends MessageType> =
 				color: import('@penpot/plugin-types').Fill | import('@penpot/plugin-types').Stroke | import('@penpot/plugin-types').Shadow
 			}
 		}
+	: T extends 'CHANGE_ALL_ITEM_COLOR'
+		? {
+			type: T
+			data: {
+				from: [string/*groupId*/, string/*colorId*/]
+				to: [string/*groupId*/, string/*colorId*/]
+			}
+		}
 		: { type: T; data: undefined }
 
 // prettier-ignore
@@ -82,6 +98,8 @@ type UiMessage<T extends MessageType> =
 		? { type: T; data: import('@penpot/plugin-types').LibraryColor[] }
 	: T extends 'GET_CONNECTED_COLORS'
 		? { type: T; data: Record<string, import('@penpot/plugin-types').LibraryColor[]> }
+	: T extends 'GET_CONNECTED_COLORS2'
+		? { type: T; data: UiConnectedColor[] }
 	: T extends 'GET_GROUP_LIB_COMPONENTS'
 		? { type: T; data: UiGroupLibComponent[] }
 	: T extends 'EXPORT'

@@ -1,5 +1,5 @@
 import { MAP_LIB_GROUP_NAME, MAP_NAME } from '@/constant/color-copy.ts'
-import type { Fill, LibraryColor, Shadow, Shape, Stroke } from '@penpot/plugin-types'
+import type { Fill, LibraryColor, Rectangle, Shadow, Shape, Stroke } from '@penpot/plugin-types'
 import { name as manifestName } from '../public/manifest.json'
 import { version as pkgVersion } from '../package.json'
 
@@ -24,6 +24,7 @@ penpot.on('selectionchange', event => {
 
 const globalState = {
 	groupLibComponents: [] as PluginGroupLibComponent[],
+	connectedColors: {} as Map<string, Map<string, LibraryColor>>,
 }
 
 penpot.ui.onMessage(async (message: PenpotMessage<MessageType>) => {
@@ -51,6 +52,20 @@ penpot.ui.onMessage(async (message: PenpotMessage<MessageType>) => {
 		})
 
 		sendMessage(msg.type, groupColorsList)
+		updateLibColorsMap()
+	} else if (message.type === 'GET_CONNECTED_COLORS2') {
+		const result: UiConnectedColor[] = []
+
+		penpot.library.connected.forEach(e => {
+			result.push({
+				id: e.id,
+				name: e.name,
+				colors: e.colors,
+			})
+		})
+
+		sendMessage('GET_CONNECTED_COLORS2', result)
+		updateLibColorsMap()
 	} else if (msg.type === 'GET_GROUP_LIB_COMPONENTS') {
 		const groupLibComponents = penpot.library.connected
 			.filter(e => e.components.length > 0)
@@ -103,6 +118,7 @@ penpot.ui.onMessage(async (message: PenpotMessage<MessageType>) => {
 		if ((color as Fill)?.fillColor || (color as Fill)?.fillColorGradient) {
 			color = color as Fill
 			// TODO 漸層加入、色號替換
+			// TODO 漸層目前不知道怎麼換
 			if (color.fillColorGradient) {
 				console.log(newColor)
 				console.log(color.fillColorGradient)
@@ -135,6 +151,8 @@ penpot.ui.onMessage(async (message: PenpotMessage<MessageType>) => {
 			if (color.color?.color != null) newColor.color = color.color.color
 			if (color.color?.opacity != null) newColor.opacity = color.color.opacity
 		}
+	} else if (msg.type === 'CHANGE_ALL_ITEM_COLOR') {
+		recursiveSwap(msg.data.from, msg.data.to, penpot.root ? [penpot.root] : [])
 	}
 })
 
@@ -262,4 +280,87 @@ function recursiveChangeColor(
 			}
 		}
 	})
+}
+
+function recursiveSwap(
+	from: [string /*groupId*/, string /*colorId*/],
+	to: [string /*groupId*/, string /*colorId*/],
+	shapes: Shape[],
+) {
+	const [, fromColorId] = from
+	const [toGroupId, toColorId] = to
+	const newColor = globalState.connectedColors.get(toGroupId)?.get(toColorId)
+
+	if (!newColor) {
+		console.log('找不到顏色', from, to)
+		return
+	}
+
+	shapes.forEach(shape => {
+		if (
+			penpot.utils.types.isGroup(shape) ||
+			penpot.utils.types.isBoard(shape) ||
+			penpot.utils.types.isBool(shape) ||
+			penpot.utils.types.isMask(shape)
+		) {
+			recursiveSwap(from, to, shape.children)
+		} else if (
+			penpot.utils.types.isRectangle(shape) ||
+			penpot.utils.types.isEllipse(shape) ||
+			penpot.utils.types.isText(shape)
+		) {
+			if (shape.fills) {
+				const _shape = shape as Rectangle
+				const newFills = [..._shape.fills]
+				let isChange = false
+				_shape.fills.forEach((e, i) => {
+					if (e.fillColorRefId === fromColorId) {
+						newFills[i] = newColor.asFill()
+						isChange = true
+					}
+				})
+				if (isChange) _shape.fills = newFills
+			}
+
+			if (shape.strokes) {
+				const _shape = shape as Rectangle
+				const newStrokes = [..._shape.strokes]
+				let isChange = false
+				_shape.strokes.forEach((e, i) => {
+					if (e.strokeColorRefId === fromColorId) {
+						newStrokes[i] = newColor.asStroke()
+						isChange = true
+					}
+				})
+				if (isChange) _shape.strokes = newStrokes
+			}
+
+			// TODO 不知道怎麼換
+			// if (shape.shadows) {
+			// 	const _shape = shape as Rectangle
+			// 	const newShadows = [..._shape.shadows]
+			// 	let isChange = false
+			// 	_shape.shadows.forEach((e, i) => {
+			// 		if (!e.color) return
+			// 		if (e.color.id === fromColorId || e.color.refId === fromColorId) {
+			// 			newShadows[i] = { ...e, color: { ...e.color, id: newColor.id, name: newColor.name, gradient: undefined, color: newColor.color, opacity: newColor.opacity, fileId: undefined, refId: newColor.id, refFile: undefined, image: undefined } }
+			// 			isChange = true
+			// 		}
+			// 	})
+			// 	if (isChange) _shape.shadows = newShadows
+			// }
+		}
+	})
+}
+
+function updateLibColorsMap() {
+	const result = new Map<string, Map<string, LibraryColor>>()
+	penpot.library.connected.forEach(e => {
+		const child = new Map<string, LibraryColor>()
+		e.colors.forEach(f => {
+			child.set(f.id, f)
+		})
+		result.set(e.id, child)
+	})
+	globalState.connectedColors = result
 }
