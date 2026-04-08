@@ -335,7 +335,7 @@ function recursiveSwap(
 				const newStrokes = [..._shape.strokes]
 				let isChange = false
 				_shape.strokes.forEach((e, i) => {
-					if (e.strokeColorRefFile === toColorFileId && e.strokeColorRefId === fromColorId) {
+					if (e.strokeColorRefFile === fromColorFileId && e.strokeColorRefId === fromColorId) {
 						newStrokes[i] = newColor.asStroke()
 						isChange = true
 					}
