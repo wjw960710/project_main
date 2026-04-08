@@ -8,6 +8,7 @@ type MessageType =
 	| 'SELECTION_FLAT_INFO' // 取得 selection 的扁平化訊息
 	| 'CREATE_LIB_COLOR' // 新增資源顏色
 	| 'CHANGE_ALL_ITEM_COLOR' // 切換所有元素顏色
+	| 'CHANGE_ALL_ITEM_COLOR_START' // 切換所有元素顏色準備替換時
 	| 'GET_CONNECTED_COLORS2' // 取得該檔案所有關聯的顏色資源
 
 type UiLibComp = Pick<
@@ -53,10 +54,19 @@ type PenpotReplaceShapeColorLocation = 'fill' | 'stroke'
 
 type PenpotColorStop = { color: string; opacity?: number; offset: number }
 
+type RealLibraryColor = import('@penpot/plugin-types').LibraryColor & {
+	fileId: string
+}
 type UiConnectedColor = {
 	id: string
 	name: string
-	colors: import('@penpot/plugin-types').LibraryColor[]
+	colors: RealLibraryColor[]
+}
+
+type ChangeAllItemColorItem = {
+	groupId: string
+	colorId: string
+	colorFileId: string
 }
 
 // prettier-ignore
@@ -70,7 +80,7 @@ type PenpotMessage<T extends MessageType> =
 		? {
 			type: T
 			data: {
-				color: import('@penpot/plugin-types').LibraryColor
+				color: RealLibraryColor
 				location: PenpotReplaceShapeColorLocation
 			}
 		}
@@ -86,8 +96,9 @@ type PenpotMessage<T extends MessageType> =
 		? {
 			type: T
 			data: {
-				from: [string/*groupId*/, string/*colorId*/]
-				to: [string/*groupId*/, string/*colorId*/]
+				from: ChangeAllItemColorItem
+				to: ChangeAllItemColorItem
+				isSelection: boolean
 			}
 		}
 		: { type: T; data: undefined }
@@ -95,9 +106,9 @@ type PenpotMessage<T extends MessageType> =
 // prettier-ignore
 type UiMessage<T extends MessageType> =
 	T extends 'GET_LOCAL_COLORS'
-		? { type: T; data: import('@penpot/plugin-types').LibraryColor[] }
+		? { type: T; data: RealLibraryColor[] }
 	: T extends 'GET_CONNECTED_COLORS'
-		? { type: T; data: Record<string, import('@penpot/plugin-types').LibraryColor[]> }
+		? { type: T; data: Record<string, RealLibraryColor[]> }
 	: T extends 'GET_CONNECTED_COLORS2'
 		? { type: T; data: UiConnectedColor[] }
 	: T extends 'GET_GROUP_LIB_COMPONENTS'
@@ -108,4 +119,6 @@ type UiMessage<T extends MessageType> =
 		? { type: T; data: UiMsgSelectionData }
 	: T extends 'SELECTION_FLAT_INFO'
 		? { type: T; data: UiMsgSelectionFlatInfoData }
+	: T extends 'CHANGE_ALL_ITEM_COLOR_START'
+		? { type: T; data: string }
 	: { type: T; data: undefined }

@@ -1,6 +1,6 @@
 import { type KeyboardEvent, useEffect, useMemo, useState } from 'react'
 import { snedMessage } from '@/util/action-ui.ts'
-import type { Fill, LibraryColor, Shadow, Shape, Stroke } from '@penpot/plugin-types'
+import type { Fill, Shadow, Shape, Stroke } from '@penpot/plugin-types'
 import { rgba } from 'polished'
 import { Input } from '@/shadcn-official/component-ui/input.tsx'
 
@@ -118,8 +118,8 @@ export function App() {
 				}
 			})
 
-			// console.log(shapes)
-			// console.log(result)
+			console.log(shapes)
+			console.log(result)
 			setColors(result)
 		}
 	}, [])
@@ -165,29 +165,35 @@ export function App() {
 		}
 	}
 
-	return colors.map((e, i) => {
-		const colors = e.stops || { color: e.color!, opacity: e.opacity }
-		const isEdit = editIdx === i
+	return (
+		<>
+			{colors.length
+				? colors.map((e, i) => {
+						const colors = e.stops || { color: e.color!, opacity: e.opacity }
+						const isEdit = editIdx === i
 
-		return (
-			<div key={i} className={'flex items-center mt-1'}>
-				<ColorIcon colors={colors} />
-				<div className="flex-1">
-					{isEdit ? (
-						<Input
-							className={'w-full'}
-							type="text"
-							placeholder="請輸入資源名稱(ENTER 編輯; ESC 取消)"
-							autoFocus
-							onKeyUp={handleSave(i)}
-						/>
-					) : (
-						<ColorText colors={colors} type={e.type} onClick={handleToggleEdit(i)} />
-					)}
-				</div>
-			</div>
-		)
-	})
+						return (
+							<div key={i} className={'flex items-center mt-1'}>
+								<ColorIcon colors={colors} />
+								<div className="flex-1">
+									{isEdit ? (
+										<Input
+											className={'w-full'}
+											type="text"
+											placeholder="請輸入資源名稱(ENTER 編輯; ESC 取消)"
+											autoFocus
+											onKeyUp={handleSave(i)}
+										/>
+									) : (
+										<ColorText colors={colors} type={e.type} onClick={handleToggleEdit(i)} />
+									)}
+								</div>
+							</div>
+						)
+					})
+				: '請框選元素'}
+		</>
+	)
 }
 
 function ColorText({

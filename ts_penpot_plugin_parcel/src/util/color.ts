@@ -1,9 +1,7 @@
-import type { LibraryColor } from '@penpot/plugin-types'
-
 export function sortColorNameList(
-	colorList: LibraryColor[],
+	colorList: RealLibraryColor[],
 	{ transformElement } = {} as {
-		transformElement: (el: LibraryColor) => LibraryColor
+		transformElement: (el: RealLibraryColor) => RealLibraryColor
 	},
 ) {
 	const regex = /^([A-z]+)(\d+)/

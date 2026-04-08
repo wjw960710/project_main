@@ -7,7 +7,6 @@ import {
 	useMemo,
 	useState,
 } from 'react'
-import type { LibraryColor } from '@penpot/plugin-types'
 import { snedMessage } from '@/util/action-ui.ts'
 import { debounce } from 'radash'
 import {
@@ -40,7 +39,7 @@ const MAP_SEARCH_VALUE = {
 }
 
 export function App() {
-	const [groupLibColors, setGroupLibColors] = useState<Record<string, LibraryColor[]>>(
+	const [groupLibColors, setGroupLibColors] = useState<Record<string, RealLibraryColor[]>>(
 		() => ({}),
 	)
 	const [collapsedGroup, setCollapsedGroup] = useState<Record<string, boolean>>({})
@@ -72,9 +71,9 @@ export function App() {
 		}
 
 		if (group.length) {
-			const groupLibColors: Record<string, LibraryColor[]> = {}
+			const groupLibColors: Record<string, RealLibraryColor[]> = {}
 			for (let key in result.groupLibColors) {
-				const _group = key as keyof Record<string, LibraryColor[]>
+				const _group = key as keyof Record<string, RealLibraryColor[]>
 				if (group === _group) {
 					groupLibColors[_group] = result.groupLibColors[_group]
 				}
@@ -110,9 +109,9 @@ export function App() {
 			}
 
 			result.highlights = highlights
-			const groupLibColors: Record<string, LibraryColor[]> = {}
+			const groupLibColors: Record<string, RealLibraryColor[]> = {}
 			for (let key in result.groupLibColors) {
-				const group = key as keyof Record<string, LibraryColor[]>
+				const group = key as keyof Record<string, RealLibraryColor[]>
 				const newList = result.groupLibColors[group].filter(color => {
 					return highlights[isTextAnd ? 'every' : 'some'](keyword =>
 						color.name.includes(keyword),
@@ -140,7 +139,7 @@ export function App() {
 
 			if (msg.type === 'GET_CONNECTED_COLORS') {
 				for (let key in msg.data) {
-					const group = key as keyof Record<string, LibraryColor[]>
+					const group = key as keyof Record<string, RealLibraryColor[]>
 					msg.data[group] = sortColorNameList(msg.data[group])
 				}
 				setGroupLibColors(msg.data)
@@ -177,7 +176,7 @@ export function App() {
 		}
 	}
 
-	function handleColorClick(ev: MouseEvent<HTMLDivElement>, color: LibraryColor) {
+	function handleColorClick(ev: MouseEvent<HTMLDivElement>, color: RealLibraryColor) {
 		const location: PenpotReplaceShapeColorLocation = ev.altKey ? 'stroke' : 'fill'
 		snedMessage('REPLACE_COLOR', {
 			color,
@@ -269,7 +268,7 @@ function transformOpacityText(opacity: number | undefined) {
 	return ` (${opacity * 100}%)`
 }
 
-function HexText({ color }: { color: LibraryColor }) {
+function HexText({ color }: { color: RealLibraryColor }) {
 	let node: ReactNode
 	if (color.color) {
 		node = `${color.color}${transformOpacityText(color.opacity)}`
@@ -291,7 +290,7 @@ function HexText({ color }: { color: LibraryColor }) {
 	return null
 }
 
-function hexToRgba(color: Pick<LibraryColor, 'color' | 'opacity'>): string {
+function hexToRgba(color: Pick<RealLibraryColor, 'color' | 'opacity'>): string {
 	if (!color.color) return ''
 
 	if (color.opacity != null) {
@@ -301,7 +300,7 @@ function hexToRgba(color: Pick<LibraryColor, 'color' | 'opacity'>): string {
 	return color.color
 }
 
-function ColorIcon({ color }: { color: LibraryColor }) {
+function ColorIcon({ color }: { color: RealLibraryColor }) {
 	let rgbaList: string[] = []
 
 	if (color.color) {

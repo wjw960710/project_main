@@ -6,7 +6,7 @@ import {
 	useMemo,
 	useState,
 } from 'react'
-import type { Gradient, LibraryColor } from '@penpot/plugin-types'
+import type { Gradient } from '@penpot/plugin-types'
 import { clone, debounce } from 'radash'
 import { MAP_LIB_UI_GROUP_NAME, MAP_NAME } from '@/constant/color-copy.ts'
 import {
@@ -40,7 +40,7 @@ type GroupColorListItem = {
 	path: string
 	viewColor: string
 	stop?: GradientStop
-	color?: LibraryColor
+	color?: RealLibraryColor
 }
 
 type GroupColor = {
@@ -67,7 +67,7 @@ const MODE_TAB = {
 }
 
 export function App() {
-	const [groupLibColors, setGroupLibColors] = useState<Record<string, LibraryColor[]>>(
+	const [groupLibColors, setGroupLibColors] = useState<Record<string, RealLibraryColor[]>>(
 		() => ({}),
 	)
 	const [collapsedGroup, setCollapsedGroup] = useState<Record<string, boolean>>({})
@@ -422,8 +422,8 @@ function toViewColorValue(color: { color?: string | null; opacity?: number | nul
 	return color.color!
 }
 
-function toViewList(groupLibColors: Record<string, LibraryColor[]>) {
-	const clonedGroupLibColors: Record<string, LibraryColor[]> = clone(groupLibColors)
+function toViewList(groupLibColors: Record<string, RealLibraryColor[]>) {
+	const clonedGroupLibColors: Record<string, RealLibraryColor[]> = clone(groupLibColors)
 	const result: GroupColor[] = []
 
 	Object.entries(clonedGroupLibColors).forEach(([k, e]) => {
