@@ -17,7 +17,7 @@ export function App() {
 	const [toGroupIdx, setToGroupIdx] = useState(-1)
 	const [fromColorIdx, setFromColorIdx] = useState(-1)
 	const [toColorIdx, setToColorIdx] = useState(-1)
-	const [checkedSelection, setCheckedSelection] = useState(false)
+	const [checkedSelection, setCheckedSelection] = useState(true)
 	const [submitLoading, setSubmitLoading] = useState(false)
 	const loadingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 	const chooseValid = useMemo(() => {
